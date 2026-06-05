@@ -1,0 +1,77 @@
+# ============================================================
+#  SMARTERP · .gitignore (Flutter + Supabase self-hosted Docker)
+# ============================================================
+
+# ---------- SEGRETI & AMBIENTE (MAI versionare) ----------
+.env
+.env.*.local
+.env.local
+.env.production
+*.key
+*.pem
+*.p12
+*.jks
+*.keystore
+secrets/
+**/service-account*.json
+
+# Si MANTIENE invece il template di esempio (forziamo il tracciamento)
+!.env.example
+
+# ---------- DATI PERSISTENTI DOCKER (montaggi locali) ----------
+# I named volumes vivono in /var/lib/docker e NON stanno nel repo,
+# ma se mai usassimo bind-mount per i dati, escludiamoli qui:
+volumes/db/data/
+volumes/storage/data/
+docker-data/
+pgdata/
+
+# ---------- FLUTTER / DART ----------
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+app/build/
+app/.pub-cache/
+app/.pub/
+app/coverage/
+**/doc/api/
+**/*.g.dart.bak
+
+# ---------- ANDROID ----------
+app/android/.gradle/
+app/android/captures/
+app/android/local.properties
+app/android/key.properties
+app/android/app/release/
+app/android/**/GeneratedPluginRegistrant.java
+app/**/*.iml
+
+# ---------- iOS / macOS ----------
+app/ios/Pods/
+app/ios/.symlinks/
+app/ios/Flutter/Flutter.framework
+app/ios/Flutter/Flutter.podspec
+app/ios/Flutter/Generated.xcconfig
+app/ios/Flutter/flutter_export_environment.sh
+app/ios/Runner/GeneratedPluginRegistrant.*
+**/DerivedData/
+**/*.xcuserstate
+
+# ---------- WEB ----------
+app/web/.dart_tool/
+
+# ---------- IDE / OS ----------
+.idea/
+.vscode/
+*.code-workspace
+.DS_Store
+Thumbs.db
+*.swp
+*.log
+
+# ============================================================
+#  TRACCIATI ESPLICITAMENTE (configurazioni Docker "sicure"):
+#  docker-compose.yml, .env.example, volumes/api/kong.yml,
+#  volumes/db/init/00_init_smarterp.sql, README.md
+# ============================================================

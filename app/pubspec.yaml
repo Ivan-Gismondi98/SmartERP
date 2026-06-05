@@ -1,0 +1,23 @@
+name: smarterp
+description: ERP multi-tenant SmartERP (Android, iOS, Web) con backend Supabase self-hosted.
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  supabase_flutter: ^2.8.0
+  pdf: ^3.11.1            # generazione stampe lato client
+  printing: ^5.13.3       # anteprima/stampa PDF
+  docx_template: ^0.4.0   # template Word brandizzati
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

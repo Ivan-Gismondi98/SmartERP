@@ -1,0 +1,5 @@
+{
+  "PRODUCTION": true,
+  "PROD_SUPABASE_URL": "https://smarterp.example.com",
+  "PROD_ANON_KEY": "INSERISCI_QUI_LA_TUA_ANON_KEY_DI_PRODUZIONE"
+}
