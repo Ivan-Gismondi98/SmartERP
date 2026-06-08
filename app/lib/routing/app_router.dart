@@ -14,6 +14,8 @@ import '../features/auth/presentation/login_page.dart';
 import '../features/chat/presentation/chat_rooms_page.dart';
 import '../features/customers/presentation/customers_page.dart';
 import '../features/developer/presentation/dev_dashboard_page.dart';
+import '../features/developer/presentation/organizations_page.dart';
+import '../features/developer/presentation/users_page.dart';
 import '../features/errors/presentation/error_logs_page.dart';
 import '../features/diagnostics/presentation/connection_check_page.dart';
 import '../features/home/presentation/home_page.dart';
@@ -54,6 +56,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/studio', builder: (_, __) => const StudioPage()),
       GoRoute(path: '/errors', builder: (_, __) => const ErrorLogsPage()),
       GoRoute(path: '/dev', builder: (_, __) => const DevDashboardPage()),
+      GoRoute(path: '/users', builder: (_, __) => const UsersPage()),
+      GoRoute(path: '/orgs', builder: (_, __) => const OrganizationsPage()),
       GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()),
       GoRoute(
         path: '/settings/permissions',

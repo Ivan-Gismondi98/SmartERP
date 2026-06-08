@@ -257,7 +257,12 @@ reale (firmandole con il tuo `JWT_SECRET`) e aggiorna di conseguenza
       **Dashboard** con KPI organizzazioni/licenze attive/incassato/licenze in
       ritardo, **bug per gravità** (30gg) e **ticket per stato**; gestione
       licenze (CRUD) e registrazione pagamenti. Gated `dev.dashboard`/`licenses.manage`.
-- [ ] **CRUD utenti/ruoli/permessi/aziende** (superadmin) via RPC sicure.
+- [x] **CRUD utenti/ruoli/aziende (STEP 14)**: super_admin gestisce utenti
+      (creazione via RPC sicura `admin_create_user` → insert `auth.users`+identity
+      con password bcrypt; modifica ruolo/azienda/attivo; eliminazione
+      `admin_delete_user`) e organizzazioni (CRUD). **RLS su `profiles`/`companies`**
+      (chiusa l'escalation di ruolo: solo super_admin assegna super_admin).
+      Gated `users.manage`/`companies.manage`. Per-utente override permessi: TODO.
 - [ ] **Notifiche realtime** ("Notifica" dipendente→admin, admin→sviluppatore),
       **ticket** con stato di avanzamento, **chat diretta admin↔sviluppatore**
       con allegati, **export Excel** segnalazioni.

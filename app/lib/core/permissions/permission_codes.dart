@@ -37,6 +37,8 @@ class Perm {
 
   static const devDashboard = 'dev.dashboard';
   static const licensesManage = 'licenses.manage';
+  static const usersManage = 'users.manage';
+  static const companiesManage = 'companies.manage';
 
   static const settingsPermissionsManage = 'settings.permissions.manage';
   static const settingsCompanyManage = 'settings.company.manage';

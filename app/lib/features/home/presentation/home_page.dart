@@ -48,6 +48,10 @@ const _modules = <_Module>[
       route: '/errors', requiredPermission: Perm.errorsView),
   _Module('Dashboard Sviluppatore', Icons.developer_board_outlined,
       route: '/dev', requiredPermission: Perm.devDashboard),
+  _Module('Utenti', Icons.manage_accounts_outlined,
+      route: '/users', requiredPermission: Perm.usersManage),
+  _Module('Organizzazioni', Icons.apartment_outlined,
+      route: '/orgs', requiredPermission: Perm.companiesManage),
   _Module('Impostazioni', Icons.settings_outlined,
       route: '/settings', staffOnly: false),
 ];
