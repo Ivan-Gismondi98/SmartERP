@@ -187,6 +187,12 @@ reale (firmandole con il tuo `JWT_SECRET`) e aggiorna di conseguenza
 - [x] **Permessi configurabili (stile Odoo)**: tabelle `permissions` /
       `role_permissions` (default globali + override per azienda), schermata
       *Impostazioni → Permessi* per attivare/disattivare i permessi per ruolo.
+- [~] **Fatturazione (STEP 4 — stampa & scadenze)**: **stampa PDF** della
+      fattura (`pdf`+`printing`, anteprima con stampa/download anche su web),
+      **termini di pagamento in giorni** che calcolano la scadenza, e
+      **interessi di mora** configurabili (tasso annuo) calcolati sul ritardo
+      per le fatture scadute (mostrati in dettaglio e in PDF). Stampa gated da
+      `invoices.print`.
 - [ ] **Motore di stampa client-side**: usare i pacchetti `pdf` + `printing`
       per i PDF e `docx_template` per i documenti Word, iniettando i colori e
       il logo presi da `companies.theme_settings` (branding per-tenant).

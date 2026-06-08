@@ -11,6 +11,7 @@ import '../application/invoices_providers.dart';
 import '../data/invoices_repository.dart';
 import '../domain/invoice.dart';
 import 'invoice_form_page.dart';
+import 'invoice_pdf_page.dart';
 import 'invoice_xml_page.dart';
 
 class InvoiceDetailPage extends ConsumerWidget {
@@ -25,6 +26,7 @@ class InvoiceDetailPage extends ConsumerWidget {
     final canDelete = ref.watch(canProvider(Perm.invoicesDelete));
     final canCreate = ref.watch(canProvider(Perm.invoicesCreate));
     final canExport = ref.watch(canProvider(Perm.invoicesExport));
+    final canPrint = ref.watch(canProvider(Perm.invoicesPrint));
 
     return Scaffold(
       appBar: AppBar(
@@ -40,6 +42,7 @@ class InvoiceDetailPage extends ConsumerWidget {
           canDelete: canDelete,
           canCreate: canCreate,
           canExport: canExport,
+          canPrint: canPrint,
           onChanged: () => ref.invalidate(invoiceDetailProvider(invoiceId)),
         ),
       ),
@@ -55,6 +58,7 @@ class _DetailBody extends ConsumerWidget {
     required this.canDelete,
     required this.canCreate,
     required this.canExport,
+    required this.canPrint,
     required this.onChanged,
   });
 
@@ -64,6 +68,7 @@ class _DetailBody extends ConsumerWidget {
   final bool canDelete;
   final bool canCreate;
   final bool canExport;
+  final bool canPrint;
   final VoidCallback onChanged;
 
   @override
@@ -154,6 +159,16 @@ class _DetailBody extends ConsumerWidget {
                         _mark(context, repo, InvoiceStatus.cancelled),
                     icon: const Icon(Icons.block),
                     label: const Text('Annulla'),
+                  ),
+                if (inv.isIssued && canPrint)
+                  FilledButton.tonalIcon(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => InvoicePdfPage(invoice: inv),
+                      ),
+                    ),
+                    icon: const Icon(Icons.picture_as_pdf),
+                    label: const Text('Stampa PDF'),
                   ),
                 if (inv.isIssued && canExport)
                   FilledButton.tonalIcon(
@@ -367,6 +382,9 @@ class _TotalsBox extends StatelessWidget {
           ),
         );
 
+    final now = DateTime.now();
+    final interest = inv.interestAmount(now);
+
     return Column(
       children: [
         row('Imponibile', Fmt.euro(inv.subtotal)),
@@ -375,6 +393,18 @@ class _TotalsBox extends StatelessWidget {
         if (inv.rounding != 0) row('Arrotondamento', Fmt.euro(inv.rounding)),
         const Divider(),
         row('TOTALE', Fmt.euro(inv.total), bold: true),
+        if (interest > 0) ...[
+          const SizedBox(height: 4),
+          Text(
+            'Scaduta da ${inv.daysLate(now)} giorni · interessi di mora '
+            '(${Fmt.percent(inv.interestRate ?? 0)} annuo)',
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: Colors.orange.shade800),
+          ),
+          row('Interessi di mora', Fmt.euro(interest)),
+          row('TOTALE + mora', Fmt.euro(inv.totalWithInterest(now)),
+              bold: true),
+        ],
       ],
     );
   }

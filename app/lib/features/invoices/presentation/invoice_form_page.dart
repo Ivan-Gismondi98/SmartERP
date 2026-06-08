@@ -168,6 +168,33 @@ class _InvoiceFormPageState extends ConsumerState<InvoiceFormPage> {
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          _NumField(
+            label: 'Giorni alla scadenza (calcola la data)',
+            value: (inv.paymentTermsDays ?? 0).toDouble(),
+            onChanged: (v) => setState(() {
+              final days = v?.round();
+              inv.paymentTermsDays = days;
+              if (days != null && days > 0) {
+                inv.dueDate = inv.issueDate.add(Duration(days: days));
+              }
+            }),
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Interessi di mora se scaduta'),
+            subtitle: const Text(
+                'Applica un tasso annuo sul ritardo di pagamento'),
+            value: inv.interestEnabled,
+            onChanged: (v) => setState(() => inv.interestEnabled = v),
+          ),
+          if (inv.interestEnabled)
+            _NumField(
+              label: 'Tasso annuo % di mora',
+              value: inv.interestRate ?? 0,
+              onChanged: (v) => setState(() => inv.interestRate = v),
+            ),
           const Divider(height: 32),
 
           // --- Righe ---

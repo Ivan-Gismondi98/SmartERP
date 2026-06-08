@@ -115,6 +115,9 @@ class Invoice {
     this.rounding = 0,
     this.paymentMethod,
     this.paymentTerms,
+    this.paymentTermsDays,
+    this.interestEnabled = false,
+    this.interestRate,
     this.notes,
     this.numberingYear,
     this.numberingSeq,
@@ -136,6 +139,9 @@ class Invoice {
   double rounding;
   String? paymentMethod;
   String? paymentTerms;
+  int? paymentTermsDays;
+  bool interestEnabled;
+  double? interestRate;
   String? notes;
   int? numberingYear;
   int? numberingSeq;
@@ -156,6 +162,25 @@ class Invoice {
       status == InvoiceStatus.sent &&
       dueDate != null &&
       dueDate!.isBefore(DateTime(now.year, now.month, now.day));
+
+  /// Giorni di ritardo rispetto alla scadenza (0 se non scaduta).
+  int daysLate(DateTime now) {
+    if (!overdueAt(now)) return 0;
+    final today = DateTime(now.year, now.month, now.day);
+    return today.difference(dueDate!).inDays;
+  }
+
+  /// Interessi di mora maturati: totale × tasso annuo × giorni/365.
+  /// Calcolati solo se abilitati, con tasso impostato e fattura scaduta.
+  double interestAmount(DateTime now) {
+    if (!interestEnabled || interestRate == null || interestRate! <= 0) return 0;
+    final days = daysLate(now);
+    if (days <= 0) return 0;
+    return round2(total * (interestRate! / 100) * (days / 365));
+  }
+
+  /// Totale comprensivo di eventuali interessi di mora.
+  double totalWithInterest(DateTime now) => round2(total + interestAmount(now));
 
   // ---------- Calcolo fiscale ----------
 
@@ -223,6 +248,9 @@ class Invoice {
       rounding: (j['rounding'] as num?)?.toDouble() ?? 0,
       paymentMethod: j['payment_method'] as String?,
       paymentTerms: j['payment_terms'] as String?,
+      paymentTermsDays: (j['payment_terms_days'] as num?)?.toInt(),
+      interestEnabled: (j['interest_enabled'] as bool?) ?? false,
+      interestRate: (j['interest_rate'] as num?)?.toDouble(),
       notes: j['notes'] as String?,
       numberingYear: (j['numbering_year'] as num?)?.toInt(),
       numberingSeq: (j['numbering_seq'] as num?)?.toInt(),
@@ -246,6 +274,9 @@ class Invoice {
         'rounding': rounding,
         'payment_method': paymentMethod,
         'payment_terms': paymentTerms,
+        'payment_terms_days': paymentTermsDays,
+        'interest_enabled': interestEnabled,
+        'interest_rate': interestRate,
         'notes': notes,
         'reference_invoice_id': referenceInvoiceId,
       };

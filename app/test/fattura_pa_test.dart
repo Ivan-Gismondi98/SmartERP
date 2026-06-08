@@ -20,7 +20,7 @@ void main() {
     province: 'MI',
   );
 
-  final customer = Customer(
+  const customer = Customer(
     id: 'k1',
     companyId: 'c1',
     name: 'Cliente Esempio S.p.A.',

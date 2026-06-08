@@ -11,7 +11,8 @@ import '../domain/invoice.dart';
 const _invoiceSelect =
     'id, company_id, customer_id, invoice_number, status, document_type, '
     'issue_date, due_date, subtotal, tax_amount, total, stamp_duty, rounding, '
-    'payment_method, payment_terms, notes, numbering_year, numbering_seq, '
+    'payment_method, payment_terms, payment_terms_days, '
+    'interest_enabled, interest_rate, notes, numbering_year, numbering_seq, '
     'reference_invoice_id, '
     'customers ( id, company_id, name, is_company, vat_number, tax_code, '
     'address, zip, city, province, country, sdi_code, pec, email, phone )';
