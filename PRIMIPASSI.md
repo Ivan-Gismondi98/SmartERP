@@ -201,17 +201,36 @@ flutter devices
 ### Test su Web (la via piu' rapida per verificare la connessione)
 
 ```powershell
-# 5.5 Avvia su Chrome puntando al backend locale http://localhost:8000
-flutter run -d chrome --dart-define-from-file=config/dev.json
+# 5.5 Controlla i device disponibili e usa quello presente.
+#     ATTENZIONE: su questa macchina e' installato EDGE, non Chrome.
+#     `-d chrome` darebbe "No supported devices found" e non aprirebbe nulla.
+flutter run -d edge --dart-define-from-file=config/dev.json
+# In alternativa senza browser specifico: flutter run -d web-server ...
 ```
 
-**Test riuscito** = nella pagina che si apre vedi:
-- `Ambiente: LOCAL (docker)`
-- `Backend: http://localhost:8000`
-- `DB raggiungibile: [{id: 0000...0001, name: Talete Demo S.r.l.}]`
+**App avviata** = si apre la **schermata di login** SmartERP. Accedi con
+l'utente demo:
+- email: `admin@smarterp.local`
+- password: `Demo1234`
 
-Quella terza riga conferma che Flutter -> Kong -> PostgREST -> PostgreSQL
-funziona end-to-end leggendo davvero l'azienda demo dal database.
+Dopo il login vedi la **dashboard** con nome utente, azienda
+("Talete Demo S.r.l."), ruolo (Amministratore) e i moduli del gestionale.
+
+> Per la sola diagnostica di connessione backend (Flutter -> Kong -> PostgREST
+> -> PostgreSQL) e' disponibile la rotta `/diagnostics`.
+
+### (Solo la prima volta) Creare l'utente demo
+
+Se il DB e' appena stato creato non esiste alcun utente. Crea il demo cosi':
+
+```powershell
+# 1) Registra l'utente via API GoTrue (autoconferma attiva -> subito usabile)
+$KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlLXNtYXJ0ZXJwIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjIxMDAwMDAwMDB9.OFH7TLJFdZgU_DggeH_XpiL34U4Q11xArnnXFccyaCk"
+curl.exe -s -X POST "http://localhost:8000/auth/v1/signup" -H "apikey: $KEY" -H "Content-Type: application/json" -d '{\"email\":\"admin@smarterp.local\",\"password\":\"Demo1234\",\"data\":{\"full_name\":\"Admin Demo\"}}'
+
+# 2) Promuovi il profilo ad admin e collegalo all'azienda demo
+docker exec smarterp-db psql -U postgres -d postgres -c "update public.profiles set role='admin', company_id='00000000-0000-0000-0000-000000000001' where id=(select id from auth.users where email='admin@smarterp.local');"
+```
 
 ### Test su Emulatore Android (opzionale)
 

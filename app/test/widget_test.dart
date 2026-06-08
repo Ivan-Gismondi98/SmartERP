@@ -1,17 +1,18 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
+// Smoke test: l'app si avvia e, in caso di errore di init backend,
+// mostra la pagina diagnostica senza dipendere dalla rete.
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:smarterp/main.dart';
+import 'package:smarterp/app.dart';
 
 void main() {
-  testWidgets('SmartERP app loads the connection page', (WidgetTester tester) async {
-    await tester.pumpWidget(const SmartErpApp());
+  testWidgets('Mostra la pagina diagnostica se init backend fallisce',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: SmartErpApp(initError: 'backend non raggiungibile'),
+      ),
+    );
 
     expect(find.text('SmartERP · Connessione'), findsOneWidget);
     expect(find.text('Ambiente: LOCAL (docker)'), findsOneWidget);

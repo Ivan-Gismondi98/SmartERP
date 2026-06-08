@@ -169,9 +169,13 @@ reale (firmandole con il tuo `JWT_SECRET`) e aggiorna di conseguenza
       decrementare `inventory.quantity` per ogni `invoice_item`
       (idealmente in una transazione/funzione RPC PostgreSQL per atomicita') e
       gestire l'alert sotto `reorder_level`.
-- [ ] **Gestione sessione/auth**: schermate login/registrazione, refresh token,
-      routing protetto per ruolo.
-- [ ] **State management** (Riverpod/Bloc) e repository layer.
+- [x] **Gestione sessione/auth**: login/registrazione (GoTrue), refresh token
+      automatico, routing protetto con redirect (`go_router`). Utente demo:
+      `admin@smarterp.local` / `Demo1234`.
+- [x] **State management** (Riverpod) e repository layer
+      (`features/<dominio>/{data,domain,application,presentation}`).
+- [ ] Profilazione moduli per ruolo + schermate vere dei moduli (oggi
+      placeholder nella dashboard).
 
 ### DevOps
 - [ ] Reverse proxy HTTPS (Caddy/Traefik) + certificati per la produzione.
