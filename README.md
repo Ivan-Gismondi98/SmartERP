@@ -213,7 +213,11 @@ reale (firmandole con il tuo `JWT_SECRET`) e aggiorna di conseguenza
       stile righe (auto/catalogo/compatto), riepilogo IVA on/off, modello
       predefinito. Si sceglie il modello (Standard o salvato) dentro la fattura
       (`invoices.template_id`) e viene applicato al PDF. Gated da `studio.*`.
-      Prossimo step: export **Word (.docx)**.
+- [~] **Export Word .docx (STEP 11)**: generazione di un documento Word
+      (pacchetto OOXML costruito e zippato con `archive`) della fattura,
+      rispettando il modello Studio (header/footer/colore/stile righe/riepilogo).
+      Pulsante **Word** nel dettaglio (gated `invoices.print`). Le immagini
+      prodotto in Word sono una rifinitura successiva (nel PDF già incluse).
 - [~] **Branding per-tenant nei PDF (STEP 7)**: colori e logo presi da
       `companies.theme_settings` applicati al PDF fattura (intestazione, linea,
       totali, logo). Pagina *Impostazioni → Branding aziendale* per impostarli

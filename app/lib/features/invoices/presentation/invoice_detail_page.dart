@@ -4,11 +4,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'dart:typed_data';
+
+import 'package:file_saver/file_saver.dart';
+
 import '../../../core/format.dart';
 import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
+import '../../profile/application/profile_providers.dart';
 import '../../settings/application/settings_providers.dart';
+import '../../studio/data/templates_repository.dart';
 import '../application/invoices_providers.dart';
+import '../data/invoice_docx.dart';
 import '../data/invoices_repository.dart';
 import '../domain/invoice.dart';
 import 'invoice_form_page.dart';
@@ -177,6 +184,12 @@ class _DetailBody extends ConsumerWidget {
                     icon: const Icon(Icons.picture_as_pdf),
                     label: const Text('Stampa PDF'),
                   ),
+                if (inv.isIssued && canPrint)
+                  OutlinedButton.icon(
+                    onPressed: () => _downloadWord(context, ref),
+                    icon: const Icon(Icons.description_outlined),
+                    label: const Text('Word'),
+                  ),
                 if (inv.isIssued && canExport)
                   FilledButton.tonalIcon(
                     onPressed: () => Navigator.of(context).push(
@@ -249,6 +262,31 @@ class _DetailBody extends ConsumerWidget {
       onChanged();
     } catch (e) {
       if (context.mounted) _snack(context, 'Errore: $e');
+    }
+  }
+
+  Future<void> _downloadWord(BuildContext context, WidgetRef ref) async {
+    try {
+      final profile = await ref.read(currentProfileProvider.future);
+      final company = profile?.company;
+      if (company == null) {
+        if (context.mounted) _snack(context, 'Dati azienda mancanti.');
+        return;
+      }
+      final template = inv.templateId == null
+          ? null
+          : await ref.read(templatesRepositoryProvider).getById(inv.templateId!);
+      final bytes = const InvoiceDocxGenerator()
+          .build(inv, company, template: template);
+      await FileSaver.instance.saveFile(
+        name: 'Fattura_${inv.displayNumber.replaceAll('/', '-')}',
+        bytes: Uint8List.fromList(bytes),
+        ext: 'docx',
+        mimeType: MimeType.microsoftWord,
+      );
+      if (context.mounted) _snack(context, 'Word generato.');
+    } catch (e) {
+      if (context.mounted) _snack(context, 'Errore Word: $e');
     }
   }
 
