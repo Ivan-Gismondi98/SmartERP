@@ -91,5 +91,5 @@ class ProductsRepository {
 }
 
 final productsRepositoryProvider = Provider<ProductsRepository>((ref) {
-  return ProductsRepository(ref.watch(supabaseClientProvider));
+  return ProductsRepository(ref.watch(dataClientProvider));
 });

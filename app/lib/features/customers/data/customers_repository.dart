@@ -46,5 +46,5 @@ class CustomersRepository {
 }
 
 final customersRepositoryProvider = Provider<CustomersRepository>((ref) {
-  return CustomersRepository(ref.watch(supabaseClientProvider));
+  return CustomersRepository(ref.watch(dataClientProvider));
 });

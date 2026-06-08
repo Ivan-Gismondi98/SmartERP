@@ -105,7 +105,7 @@ class TicketsRepository {
 }
 
 final ticketsRepositoryProvider = Provider<TicketsRepository>((ref) {
-  return TicketsRepository(ref.watch(supabaseClientProvider));
+  return TicketsRepository(ref.watch(dataClientProvider));
 });
 
 /// Lista ticket (fetch REST, robusta anche senza WebSocket Realtime).

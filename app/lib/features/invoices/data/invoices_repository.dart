@@ -134,5 +134,5 @@ class InvoicesRepository {
 }
 
 final invoicesRepositoryProvider = Provider<InvoicesRepository>((ref) {
-  return InvoicesRepository(ref.watch(supabaseClientProvider));
+  return InvoicesRepository(ref.watch(dataClientProvider));
 });

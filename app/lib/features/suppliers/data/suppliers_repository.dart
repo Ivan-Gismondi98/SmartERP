@@ -35,7 +35,7 @@ class SuppliersRepository {
 }
 
 final suppliersRepositoryProvider = Provider<SuppliersRepository>((ref) {
-  return SuppliersRepository(ref.watch(supabaseClientProvider));
+  return SuppliersRepository(ref.watch(dataClientProvider));
 });
 
 final suppliersListProvider = FutureProvider<List<Supplier>>((ref) async {

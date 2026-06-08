@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/impersonation.dart';
 import 'core/theme.dart';
 import 'features/assistant/presentation/assistant_bar.dart';
 import 'features/profile/application/profile_providers.dart';
@@ -39,14 +40,36 @@ class SmartErpApp extends ConsumerWidget {
       theme: AppTheme.light(seed),
       darkTheme: AppTheme.dark(seed),
       routerConfig: router,
-      // L'Assistente IA: icona tonda ancorata a destra, quasi in fondo,
-      // sopra OGNI pagina (se la licenza è attiva).
-      builder: (context, child) => Stack(
-        children: [
-          Positioned.fill(child: child ?? const SizedBox.shrink()),
-          const Positioned(right: 16, bottom: 96, child: AssistantBar()),
-        ],
-      ),
+      // Assistente IA + bordo "impersonate" sopra OGNI pagina.
+      builder: (context, child) {
+        final impersonating = ref.watch(impersonationProvider).active;
+        return Stack(
+          children: [
+            Positioned.fill(child: child ?? const SizedBox.shrink()),
+            const Positioned(right: 16, bottom: 96, child: AssistantBar()),
+            if (impersonating) ..._hazardBorder(),
+          ],
+        );
+      },
     );
+  }
+
+  /// Strisce gialle sui 4 bordi: indicano l'impersonate attivo.
+  static List<Widget> _hazardBorder() {
+    const thickness = 8.0;
+    const hazard = DecoratedBox(
+      decoration: BoxDecoration(color: Colors.amber),
+      child: SizedBox.expand(),
+    );
+    return const [
+      Positioned(top: 0, left: 0, right: 0, height: thickness,
+          child: IgnorePointer(child: hazard)),
+      Positioned(bottom: 0, left: 0, right: 0, height: thickness,
+          child: IgnorePointer(child: hazard)),
+      Positioned(top: 0, bottom: 0, left: 0, width: thickness,
+          child: IgnorePointer(child: hazard)),
+      Positioned(top: 0, bottom: 0, right: 0, width: thickness,
+          child: IgnorePointer(child: hazard)),
+    ];
   }
 }

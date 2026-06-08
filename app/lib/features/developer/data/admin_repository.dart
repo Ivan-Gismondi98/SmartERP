@@ -62,6 +62,12 @@ class AdminRepository {
     await _client.rpc('admin_delete_user', params: {'p_uid': id});
   }
 
+  /// Token JWT firmato per impersonare [targetUid] (solo super_admin).
+  Future<String> impersonationToken(String targetUid) async {
+    final t = await _client.rpc('dev_impersonate', params: {'p_target': targetUid});
+    return t as String;
+  }
+
   // ----- Organizzazioni -----
   Future<List<Map<String, dynamic>>> listCompanies() async {
     final rows = await _client

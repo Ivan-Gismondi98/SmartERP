@@ -7,9 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/impersonation.dart';
 import '../../../core/licensing.dart';
 import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
+import '../../developer/presentation/impersonate_dialog.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../profile/application/profile_providers.dart';
 import '../../profile/domain/profile.dart';
@@ -72,12 +74,16 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Dashboard sul profilo EFFETTIVO (impersonato se attivo).
     final profileAsync = ref.watch(currentProfileProvider);
     final perms = ref.watch(allowedPermissionsProvider).valueOrNull ?? const {};
     final canTickets = perms.contains(Perm.ticketsView);
-    // Attiva lo stream realtime solo se l'utente può vedere i ticket.
     final openTickets =
         canTickets ? ref.watch(openTicketsCountProvider) : 0;
+    // L'impersonate è prerogativa dello sviluppatore REALE.
+    final realRole = ref.watch(realProfileProvider).valueOrNull?.role;
+    final isDeveloper = realRole == UserRole.superAdmin;
+    final impersonating = ref.watch(impersonationProvider).active;
 
     return Scaffold(
       appBar: AppBar(
@@ -92,6 +98,13 @@ class HomePage extends ConsumerWidget {
                 child: const Icon(Icons.notifications_outlined),
               ),
               onPressed: () => context.push('/tickets'),
+            ),
+          if (isDeveloper)
+            IconButton(
+              tooltip: impersonating ? 'Interrompi impersonate' : 'Impersonate',
+              icon: Icon(Icons.bug_report,
+                  color: impersonating ? Colors.amber : null),
+              onPressed: () => ImpersonateDialog.open(context, ref),
             ),
           IconButton(
             tooltip: 'Esci',

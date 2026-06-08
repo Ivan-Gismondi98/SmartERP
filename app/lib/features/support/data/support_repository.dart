@@ -90,6 +90,44 @@ class SupportRepository {
     return entries;
   }
 
+  /// Scrive un messaggio di sistema nel canale di supporto del [targetId]
+  /// (lo crea se non esiste — consentito al super_admin). Usato per
+  /// notificare l'avvio dell'impersonate.
+  Future<void> postImpersonationNotice(
+      String targetId, UserRole targetRole, String? companyId, String text) async {
+    String? kind;
+    if (targetRole == UserRole.admin) {
+      kind = 'admin_dev';
+    } else if (targetRole == UserRole.employee ||
+        targetRole == UserRole.customer) {
+      kind = 'user_admin';
+    } else {
+      return; // super_admin: nessun canale
+    }
+    final existing = await _client
+        .from('direct_threads')
+        .select('id')
+        .eq('kind', kind)
+        .eq('owner_id', targetId)
+        .maybeSingle();
+    String threadId;
+    if (existing != null) {
+      threadId = existing['id'] as String;
+    } else {
+      final row = await _client
+          .from('direct_threads')
+          .insert({'kind': kind, 'owner_id': targetId, 'company_id': companyId})
+          .select('id')
+          .single();
+      threadId = row['id'] as String;
+    }
+    await _client.from('direct_messages').insert({
+      'thread_id': threadId,
+      'sender_id': _client.auth.currentUser?.id,
+      'content': text,
+    });
+  }
+
   Future<List<DirectMessage>> messages(String threadId) async {
     final rows = await _client
         .from('direct_messages')
@@ -124,7 +162,7 @@ class SupportRepository {
 }
 
 final supportRepositoryProvider = Provider<SupportRepository>((ref) {
-  return SupportRepository(ref.watch(supabaseClientProvider));
+  return SupportRepository(ref.watch(dataClientProvider));
 });
 
 /// Inbox del Supporto (fetch; assicura anche il proprio canale).
