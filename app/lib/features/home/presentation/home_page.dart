@@ -40,7 +40,8 @@ const _modules = <_Module>[
   _Module('Prodotti', Icons.sell_outlined,
       route: '/products', requiredPermission: Perm.productsView),
   _Module('Fornitori', Icons.local_shipping_outlined),
-  _Module('Chat', Icons.chat_bubble_outline),
+  _Module('Chat', Icons.chat_bubble_outline,
+      route: '/chat', requiredPermission: Perm.chatView),
   _Module('Impostazioni', Icons.settings_outlined,
       route: '/settings', staffOnly: false),
 ];

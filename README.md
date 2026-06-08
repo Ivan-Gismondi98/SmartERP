@@ -159,9 +159,11 @@ reale (firmandole con il tuo `JWT_SECRET`) e aggiorna di conseguenza
 - [ ] Seeding utenti/ruoli demo via GoTrue Admin API.
 
 ### Logica applicativa Flutter
-- [ ] **Service chat realtime in streaming**: sottoscrizione
-      `supabase.from('chat_messages').stream(primaryKey: ['id'])` filtrata per
-      `room_id`, con invio messaggi e indicatore "sta scrivendo".
+- [x] **Chat realtime (STEP 8)**: stanze chat per azienda con messaggi in
+      **streaming** (`chat_messages.stream(primaryKey:['id']).eq('room_id')`),
+      invio messaggi, bolle mittente, RLS company-isolation. **Videochiamate**
+      via Jitsi Meet (link per-stanza), mostrate solo se attivate da
+      *Impostazioni → Chat* e con permesso `chat.video`. Gated da `chat.*`.
 - [~] **Fatturazione (STEP 1 — core fiscale)**: anagrafica clienti con dati
       fiscali (P.IVA con checksum, CF, Codice Destinatario SdI, PEC), fatture
       con righe, **IVA calcolata per aliquota** (riepilogo SdI) + codici

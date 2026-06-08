@@ -15,6 +15,7 @@ dependencies:
   intl: ^0.20.2             # formattazione it_IT (valuta, date)
   xml: ^6.5.0               # generazione XML FatturaPA (SdI)
   file_saver: ^0.2.14       # download file (XML) cross-platform incl. web
+  url_launcher: ^6.3.1      # apertura link (videochiamata Jitsi)
   pdf: ^3.11.1            # generazione stampe lato client
   printing: ^5.13.3       # anteprima/stampa PDF
   docx_template: ^0.4.0   # template Word brandizzati

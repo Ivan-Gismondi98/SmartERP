@@ -15,6 +15,7 @@ const _modules = <(String, String, IconData)>[
   ('invoices', 'Fatture', Icons.receipt_long_outlined),
   ('products', 'Magazzino / Prodotti', Icons.inventory_2_outlined),
   ('customers', 'Clienti', Icons.people_alt_outlined),
+  ('chat', 'Chat', Icons.chat_bubble_outline),
 ];
 
 class SettingsPage extends ConsumerWidget {

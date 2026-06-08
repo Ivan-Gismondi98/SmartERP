@@ -27,6 +27,10 @@ const _moduleToggles = <String, List<_Toggle>>{
     _Toggle('sdi_enabled', 'Firma / Invio allo SdI',
         'Mostra il blocco di firma e trasmissione SdI nel dettaglio fattura'),
   ],
+  'chat': [
+    _Toggle('video_enabled', 'Videochiamate',
+        'Mostra il pulsante videochiamata (Jitsi Meet) nelle stanze chat'),
+  ],
 };
 
 class ModuleSettingsPage extends ConsumerWidget {
