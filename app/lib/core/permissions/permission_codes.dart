@@ -35,6 +35,9 @@ class Perm {
 
   static const errorsView = 'errors.view';
 
+  static const devDashboard = 'dev.dashboard';
+  static const licensesManage = 'licenses.manage';
+
   static const settingsPermissionsManage = 'settings.permissions.manage';
   static const settingsCompanyManage = 'settings.company.manage';
 }

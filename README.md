@@ -252,8 +252,11 @@ reale (firmandole con il tuo `JWT_SECRET`) e aggiorna di conseguenza
       con filtri **gravità/periodo/testo**. RLS: super_admin vede tutte le
       organizzazioni, admin solo la propria. Utente sviluppatore demo:
       `dev@smarterp.local` / `Dev12345` (ruolo super_admin). Gated `errors.view`.
-- [ ] **Licenze + dashboard Sviluppatore** (organizzazioni, licenze/app, pagato,
-      in ritardo) + **dashboard ticket/bug**.
+- [x] **Licenze + Dashboard Sviluppatore (STEP 13)**: tabelle `licenses`,
+      `license_payments`, `tickets` (RLS: super_admin tutto, admin propria org).
+      **Dashboard** con KPI organizzazioni/licenze attive/incassato/licenze in
+      ritardo, **bug per gravità** (30gg) e **ticket per stato**; gestione
+      licenze (CRUD) e registrazione pagamenti. Gated `dev.dashboard`/`licenses.manage`.
 - [ ] **CRUD utenti/ruoli/permessi/aziende** (superadmin) via RPC sicure.
 - [ ] **Notifiche realtime** ("Notifica" dipendente→admin, admin→sviluppatore),
       **ticket** con stato di avanzamento, **chat diretta admin↔sviluppatore**

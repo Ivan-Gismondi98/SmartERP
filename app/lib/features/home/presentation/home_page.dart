@@ -46,6 +46,8 @@ const _modules = <_Module>[
       route: '/studio', requiredPermission: Perm.studioView),
   _Module('Bug del giorno', Icons.bug_report_outlined,
       route: '/errors', requiredPermission: Perm.errorsView),
+  _Module('Dashboard Sviluppatore', Icons.developer_board_outlined,
+      route: '/dev', requiredPermission: Perm.devDashboard),
   _Module('Impostazioni', Icons.settings_outlined,
       route: '/settings', staffOnly: false),
 ];
