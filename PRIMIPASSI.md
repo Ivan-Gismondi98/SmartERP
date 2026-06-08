@@ -252,6 +252,10 @@ docker exec -i smarterp-db psql -U postgres -d postgres < volumes/db/post-init/1
 docker exec -i smarterp-db psql -U postgres -d postgres < volumes/db/post-init/13_step12_error_logs.sql
 docker exec -i smarterp-db psql -U postgres -d postgres < volumes/db/post-init/14_step13_licenze_dashboard.sql
 docker exec -i smarterp-db psql -U postgres -d postgres < volumes/db/post-init/15_step14_gestione_utenti.sql
+docker exec -i smarterp-db psql -U postgres -d postgres < volumes/db/post-init/16_step14b_permessi_limitati.sql
+docker exec -i smarterp-db psql -U postgres -d postgres < volumes/db/post-init/17_step14c_delega_permessi.sql
+docker exec -i smarterp-db psql -U postgres -d postgres < volumes/db/post-init/18_step14d_isolamento_org.sql
+docker exec -i smarterp-db psql -U postgres -d postgres < volumes/db/post-init/19_step14e_licenze_app_utenti.sql
 # PostgREST deve ricaricare lo schema per vedere le nuove funzioni/colonne:
 docker exec smarterp-db psql -U postgres -d postgres -c "NOTIFY pgrst, 'reload schema';"
 ```

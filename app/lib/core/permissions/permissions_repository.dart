@@ -15,11 +15,13 @@ class PermissionDef {
       {required this.code,
       required this.module,
       required this.description,
-      this.kind = 'generic'});
+      this.kind = 'generic',
+      this.adminManageable = false});
   final String code;
   final String module;
   final String description;
   final String kind; // 'generic' | 'feature'
+  final bool adminManageable; // delegabile/gestibile dall'admin
 
   bool get isFeature => kind == 'feature';
 
@@ -28,6 +30,7 @@ class PermissionDef {
         module: j['module'] as String,
         description: j['description'] as String,
         kind: (j['kind'] as String?) ?? 'generic',
+        adminManageable: (j['admin_manageable'] as bool?) ?? false,
       );
 }
 
@@ -83,9 +86,16 @@ class PermissionsRepository {
   Future<List<PermissionDef>> fetchCatalog() async {
     final rows = await _client
         .from('permissions')
-        .select('code, module, description, kind')
+        .select('code, module, description, kind, admin_manageable')
         .order('module');
     return rows.map(PermissionDef.fromJson).toList();
+  }
+
+  /// Solo super_admin: marca un permesso come delegabile all'admin.
+  Future<void> setAdminManageable(String code, bool value) async {
+    await _client
+        .from('permissions')
+        .update({'admin_manageable': value}).eq('code', code);
   }
 
   /// Matrice effettiva (ruolo -> codice -> allowed) per la schermata

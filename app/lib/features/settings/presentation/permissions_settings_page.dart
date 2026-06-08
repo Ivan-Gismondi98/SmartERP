@@ -10,6 +10,7 @@ import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
 import '../../../core/permissions/permissions_repository.dart';
 import '../../profile/application/profile_providers.dart';
+import '../../profile/domain/profile.dart';
 
 /// (catalogo, matrice ruolo->codice->allowed) per l'azienda corrente.
 final _permissionsDataProvider = FutureProvider.autoDispose<
@@ -59,10 +60,22 @@ class PermissionsSettingsPage extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Errore: $e')),
         data: (data) {
-          final catalog = moduleFilter == null
+          final isSuper =
+              ref.watch(currentProfileProvider).valueOrNull?.role ==
+                  UserRole.superAdmin;
+          var catalog = moduleFilter == null
               ? data.catalog
               : data.catalog.where((p) => p.module == moduleFilter).toList();
-          return _Matrix(catalog: catalog, matrix: data.matrix);
+          // L'admin gestisce solo i permessi marcati "delegabile" dallo
+          // sviluppatore; il super_admin vede e gestisce tutto.
+          if (!isSuper) {
+            catalog = catalog.where((p) => p.adminManageable).toList();
+          }
+          if (catalog.isEmpty) {
+            return const Center(
+                child: Text('Nessun permesso gestibile per il tuo ruolo.'));
+          }
+          return _Matrix(catalog: catalog, matrix: data.matrix, isSuper: isSuper);
         },
       ),
     );
@@ -70,9 +83,11 @@ class PermissionsSettingsPage extends ConsumerWidget {
 }
 
 class _Matrix extends ConsumerWidget {
-  const _Matrix({required this.catalog, required this.matrix});
+  const _Matrix(
+      {required this.catalog, required this.matrix, this.isSuper = false});
   final List<PermissionDef> catalog;
   final Map<String, Map<String, bool>> matrix;
+  final bool isSuper;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -91,17 +106,17 @@ class _Matrix extends ConsumerWidget {
             child: Text(entry.key.toUpperCase(),
                 style: Theme.of(context).textTheme.titleMedium),
           ),
-          ..._kindSection(context, 'Permessi generici',
+          ..._kindSection(context, ref, 'Permessi generici',
               entry.value.where((p) => !p.isFeature).toList()),
-          ..._kindSection(context, 'Permessi di feature',
+          ..._kindSection(context, ref, 'Permessi di feature',
               entry.value.where((p) => p.isFeature).toList()),
         ],
       ],
     );
   }
 
-  List<Widget> _kindSection(
-      BuildContext context, String title, List<PermissionDef> perms) {
+  List<Widget> _kindSection(BuildContext context, WidgetRef ref, String title,
+      List<PermissionDef> perms) {
     if (perms.isEmpty) return const [];
     return [
       Padding(
@@ -134,11 +149,68 @@ class _Matrix extends ConsumerWidget {
                       ),
                   ],
                 ),
+                // Solo lo sviluppatore: decide se questo permesso è
+                // delegabile/gestibile da un admin.
+                if (isSuper)
+                  _DelegaToggle(code: perm.code, value: perm.adminManageable),
               ],
             ),
           ),
         ),
     ];
+  }
+}
+
+/// Toggle (super_admin) per rendere un permesso gestibile dall'admin.
+class _DelegaToggle extends ConsumerStatefulWidget {
+  const _DelegaToggle({required this.code, required this.value});
+  final String code;
+  final bool value;
+
+  @override
+  ConsumerState<_DelegaToggle> createState() => _DelegaToggleState();
+}
+
+class _DelegaToggleState extends ConsumerState<_DelegaToggle> {
+  late bool _value = widget.value;
+  bool _busy = false;
+
+  Future<void> _toggle(bool v) async {
+    setState(() {
+      _value = v;
+      _busy = true;
+    });
+    try {
+      await ref
+          .read(permissionsRepositoryProvider)
+          .setAdminManageable(widget.code, v);
+      ref.invalidate(_permissionsDataProvider);
+      ref.invalidate(allowedPermissionsProvider);
+    } catch (e) {
+      setState(() => _value = !v);
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Errore: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        children: [
+          _busy
+              ? const SizedBox(
+                  width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+              : Switch(value: _value, onChanged: _toggle),
+          const Expanded(child: Text('Delegabile all\'admin')),
+        ],
+      ),
+    );
   }
 }
 

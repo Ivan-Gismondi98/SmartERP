@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/licensing.dart';
 import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
 import '../../auth/application/auth_providers.dart';
@@ -16,7 +17,7 @@ import '../../profile/domain/profile.dart';
 /// Modulo del gestionale mostrato come tile nella dashboard.
 class _Module {
   const _Module(this.label, this.icon,
-      {this.route, this.requiredPermission, this.staffOnly = true});
+      {this.route, this.requiredPermission, this.app, this.staffOnly = true});
   final String label;
   final IconData icon;
 
@@ -26,30 +27,34 @@ class _Module {
   /// Permesso necessario per vedere il modulo (null = nessuno).
   final String? requiredPermission;
 
+  /// Codice app: il modulo è visibile solo se l'organizzazione ha una
+  /// licenza attiva per quell'app (null = non soggetto a licenza).
+  final String? app;
+
   /// Visibile solo allo staff (admin/employee/super_admin).
   final bool staffOnly;
 }
 
 const _modules = <_Module>[
   _Module('Fatture', Icons.receipt_long_outlined,
-      route: '/invoices', requiredPermission: Perm.invoicesView),
+      route: '/invoices', requiredPermission: Perm.invoicesView, app: 'invoices'),
   _Module('Clienti', Icons.people_alt_outlined,
-      route: '/customers', requiredPermission: Perm.customersView),
+      route: '/customers', requiredPermission: Perm.customersView, app: 'customers'),
   _Module('Magazzino', Icons.inventory_2_outlined,
-      route: '/products', requiredPermission: Perm.productsView),
+      route: '/products', requiredPermission: Perm.productsView, app: 'products'),
   _Module('Prodotti', Icons.sell_outlined,
-      route: '/products', requiredPermission: Perm.productsView),
+      route: '/products', requiredPermission: Perm.productsView, app: 'products'),
   _Module('Fornitori', Icons.local_shipping_outlined),
   _Module('Chat', Icons.chat_bubble_outline,
-      route: '/chat', requiredPermission: Perm.chatView),
+      route: '/chat', requiredPermission: Perm.chatView, app: 'chat'),
   _Module('Studio', Icons.dashboard_customize_outlined,
-      route: '/studio', requiredPermission: Perm.studioView),
+      route: '/studio', requiredPermission: Perm.studioView, app: 'studio'),
   _Module('Bug del giorno', Icons.bug_report_outlined,
       route: '/errors', requiredPermission: Perm.errorsView),
   _Module('Dashboard Sviluppatore', Icons.developer_board_outlined,
       route: '/dev', requiredPermission: Perm.devDashboard),
   _Module('Utenti', Icons.manage_accounts_outlined,
-      route: '/users', requiredPermission: Perm.usersManage),
+      route: '/users', requiredPermission: Perm.orgUsersManage),
   _Module('Organizzazioni', Icons.apartment_outlined,
       route: '/orgs', requiredPermission: Perm.companiesManage),
   _Module('Impostazioni', Icons.settings_outlined,
@@ -93,6 +98,8 @@ class _DashboardBody extends ConsumerWidget {
     final theme = Theme.of(context);
     final role = profile?.role ?? UserRole.customer;
     final perms = ref.watch(allowedPermissionsProvider).valueOrNull ?? const {};
+    final licensedApps =
+        ref.watch(licensedAppsProvider).valueOrNull ?? const <String>{};
 
     final visibleModules = _modules.where((m) {
       if (m.staffOnly && !role.isStaff) return false;
@@ -100,6 +107,8 @@ class _DashboardBody extends ConsumerWidget {
           !perms.contains(m.requiredPermission)) {
         return false;
       }
+      // App soggetta a licenza: visibile solo se l'organizzazione è abilitata.
+      if (m.app != null && !licensedApps.contains(m.app)) return false;
       return true;
     }).toList();
 

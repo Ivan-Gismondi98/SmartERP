@@ -263,6 +263,22 @@ reale (firmandole con il tuo `JWT_SECRET`) e aggiorna di conseguenza
       `admin_delete_user`) e organizzazioni (CRUD). **RLS su `profiles`/`companies`**
       (chiusa l'escalation di ruolo: solo super_admin assegna super_admin).
       Gated `users.manage`/`companies.manage`. Per-utente override permessi: TODO.
+- [x] **Gestione permessi limitata (STEP 14b)**: il **super_admin** gestisce
+      tutti i permessi di tutte le organizzazioni; l'**admin** solo quelli della
+      propria azienda ed **esclusi i moduli sensibili** (`developer`, `settings`).
+      Enforced via RLS su `role_permissions` + filtro in UI.
+- [x] **Delega permessi configurabile (STEP 14c)**: lo sviluppatore decide,
+      per ogni permesso, se è **delegabile all'admin** (`permissions.admin_manageable`);
+      l'admin può gestire/concedere solo quelli marcati delegabili, e **solo per
+      la propria organizzazione**.
+- [x] **Isolamento organizzazioni (STEP 14d)**: l'admin vede/gestisce solo la
+      propria azienda; il super_admin tutte (RLS per ruolo su `companies`).
+- [x] **App su licenza + utenti d'organizzazione (STEP 14e)**: ogni app è
+      disponibile solo se l'organizzazione ha una **licenza attiva** per quel
+      `app_code` (impostata dal super_admin; `suite` = tutte) — i moduli in
+      dashboard si filtrano di conseguenza. L'**admin** gestisce di default gli
+      **utenti della propria org** (CRUD, ruoli limitati, mai super_admin) via
+      RPC sicure (`org.users.manage`).
 - [ ] **Notifiche realtime** ("Notifica" dipendente→admin, admin→sviluppatore),
       **ticket** con stato di avanzamento, **chat diretta admin↔sviluppatore**
       con allegati, **export Excel** segnalazioni.

@@ -4,6 +4,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../profile/application/profile_providers.dart';
+import '../../profile/domain/profile.dart';
 import '../application/developer_providers.dart';
 import '../data/admin_repository.dart';
 import '../domain/app_user.dart';
@@ -177,6 +179,15 @@ class _UserDialogState extends ConsumerState<_UserDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final me = ref.watch(currentProfileProvider).valueOrNull;
+    final isSuper = me?.role == UserRole.superAdmin;
+    // L'admin opera solo sulla propria organizzazione.
+    if (!isSuper && _companyId == null && me?.companyId != null) {
+      _companyId = me!.companyId;
+    }
+    final roleEntries = kRoleLabels.entries
+        .where((e) => isSuper || e.key != 'super_admin')
+        .toList();
     final orgs = ref.watch(organizationsProvider);
     return AlertDialog(
       title: Text(_isNew ? 'Nuovo utente' : 'Modifica utente'),
@@ -204,29 +215,35 @@ class _UserDialogState extends ConsumerState<_UserDialog> {
               initialValue: _role,
               decoration: const InputDecoration(labelText: 'Ruolo'),
               items: [
-                for (final e in kRoleLabels.entries)
+                for (final e in roleEntries)
                   DropdownMenuItem(value: e.key, child: Text(e.value)),
               ],
               onChanged: (v) => setState(() => _role = v ?? 'employee'),
             ),
             const SizedBox(height: 8),
-            orgs.when(
-              loading: () => const LinearProgressIndicator(),
-              error: (e, _) => Text('Errore org: $e'),
-              data: (list) => DropdownButtonFormField<String?>(
-                initialValue: _companyId,
-                isExpanded: true,
-                decoration:
-                    const InputDecoration(labelText: 'Organizzazione'),
-                items: [
-                  const DropdownMenuItem<String?>(
-                      value: null, child: Text('Nessuna (globale)')),
-                  for (final o in list)
-                    DropdownMenuItem(value: o.id, child: Text(o.name)),
-                ],
-                onChanged: (v) => setState(() => _companyId = v),
+            if (isSuper)
+              orgs.when(
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => Text('Errore org: $e'),
+                data: (list) => DropdownButtonFormField<String?>(
+                  initialValue: _companyId,
+                  isExpanded: true,
+                  decoration:
+                      const InputDecoration(labelText: 'Organizzazione'),
+                  items: [
+                    const DropdownMenuItem<String?>(
+                        value: null, child: Text('Nessuna (globale)')),
+                    for (final o in list)
+                      DropdownMenuItem(value: o.id, child: Text(o.name)),
+                  ],
+                  onChanged: (v) => setState(() => _companyId = v),
+                ),
+              )
+            else
+              const InputDecorator(
+                decoration: InputDecoration(labelText: 'Organizzazione'),
+                child: Text('La tua organizzazione'),
               ),
-            ),
             if (!_isNew)
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
