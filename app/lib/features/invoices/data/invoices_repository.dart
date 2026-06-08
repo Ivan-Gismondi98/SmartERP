@@ -12,6 +12,7 @@ const _invoiceSelect =
     'id, company_id, customer_id, invoice_number, status, document_type, '
     'issue_date, due_date, subtotal, tax_amount, total, stamp_duty, rounding, '
     'payment_method, payment_terms, notes, numbering_year, numbering_seq, '
+    'reference_invoice_id, '
     'customers ( id, company_id, name, is_company, vat_number, tax_code, '
     'address, zip, city, province, country, sdi_code, pec, email, phone )';
 
@@ -94,6 +95,27 @@ class InvoicesRepository {
 
   Future<void> setStatus(String id, InvoiceStatus status) async {
     await _client.from('invoices').update({'status': status.db}).eq('id', id);
+  }
+
+  /// Crea una nuova BOZZA copiando righe e intestazione da [source].
+  /// Se [asCreditNote] e' true, e' una nota di credito (TD04) collegata.
+  Future<String> duplicateFrom(Invoice source,
+      {required bool asCreditNote}) async {
+    final draft = Invoice(
+      companyId: source.companyId,
+      customerId: source.customerId,
+      customer: source.customer,
+      documentType: asCreditNote ? 'TD04' : 'TD01',
+      referenceInvoiceId: asCreditNote ? source.id : null,
+      stampDuty: source.stampDuty,
+      paymentMethod: source.paymentMethod,
+      paymentTerms: source.paymentTerms,
+      notes: asCreditNote
+          ? 'Nota di credito a storno della fattura ${source.displayNumber}'
+          : source.notes,
+      items: source.items.map((it) => it.copy()..position = it.position).toList(),
+    );
+    return createDraft(draft);
   }
 }
 

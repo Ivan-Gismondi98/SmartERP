@@ -11,11 +11,18 @@ import '../data/customers_repository.dart';
 import '../domain/customer.dart';
 import 'customer_form_page.dart';
 
-class CustomersPage extends ConsumerWidget {
+class CustomersPage extends ConsumerStatefulWidget {
   const CustomersPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CustomersPage> createState() => _CustomersPageState();
+}
+
+class _CustomersPageState extends ConsumerState<CustomersPage> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
     final canCreate = ref.watch(canProvider(Perm.customersCreate));
     final canEdit = ref.watch(canProvider(Perm.customersEdit));
     final canDelete = ref.watch(canProvider(Perm.customersDelete));
@@ -33,37 +40,69 @@ class CustomersPage extends ConsumerWidget {
       body: listAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Errore: $e')),
-        data: (customers) {
-          if (customers.isEmpty) {
-            return const Center(child: Text('Nessun cliente. Aggiungine uno.'));
-          }
-          return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(customersListProvider),
-            child: ListView.separated(
-              itemCount: customers.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
-              itemBuilder: (context, i) {
-                final c = customers[i];
-                return ListTile(
-                  leading: CircleAvatar(
-                    child: Icon(
-                        c.isCompany ? Icons.business : Icons.person),
+        data: (all) {
+          final q = _query.trim().toLowerCase();
+          final customers = q.isEmpty
+              ? all
+              : all
+                  .where((c) =>
+                      '${c.name} ${c.vatNumber ?? ''} ${c.city ?? ''}'
+                          .toLowerCase()
+                          .contains(q))
+                  .toList();
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                child: TextField(
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.search),
+                    hintText: 'Cerca per nome, P.IVA o città',
+                    isDense: true,
                   ),
-                  title: Text(c.name),
-                  subtitle: Text([
-                    if (c.vatNumber != null) 'P.IVA ${c.vatNumber}',
-                    if (c.fullAddress.isNotEmpty) c.fullAddress,
-                  ].join(' · ')),
-                  trailing: canDelete
-                      ? IconButton(
-                          icon: const Icon(Icons.delete_outline),
-                          onPressed: () => _confirmDelete(context, ref, c),
-                        )
-                      : null,
-                  onTap: canEdit ? () => _openForm(context, ref, c) : null,
-                );
-              },
-            ),
+                  onChanged: (v) => setState(() => _query = v),
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: customers.isEmpty
+                    ? const Center(child: Text('Nessun cliente.'))
+                    : RefreshIndicator(
+                        onRefresh: () async =>
+                            ref.invalidate(customersListProvider),
+                        child: ListView.separated(
+                          itemCount: customers.length,
+                          separatorBuilder: (_, __) =>
+                              const Divider(height: 1),
+                          itemBuilder: (context, i) {
+                            final c = customers[i];
+                            return ListTile(
+                              leading: CircleAvatar(
+                                child: Icon(c.isCompany
+                                    ? Icons.business
+                                    : Icons.person),
+                              ),
+                              title: Text(c.name),
+                              subtitle: Text([
+                                if (c.vatNumber != null) 'P.IVA ${c.vatNumber}',
+                                if (c.fullAddress.isNotEmpty) c.fullAddress,
+                              ].join(' · ')),
+                              trailing: canDelete
+                                  ? IconButton(
+                                      icon: const Icon(Icons.delete_outline),
+                                      onPressed: () =>
+                                          _confirmDelete(context, ref, c),
+                                    )
+                                  : null,
+                              onTap: canEdit
+                                  ? () => _openForm(context, ref, c)
+                                  : null,
+                            );
+                          },
+                        ),
+                      ),
+              ),
+            ],
           );
         },
       ),

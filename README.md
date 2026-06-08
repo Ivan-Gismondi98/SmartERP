@@ -169,8 +169,11 @@ reale (firmandole con il tuo `JWT_SECRET`) e aggiorna di conseguenza
       €77,47 di esente, arrotondamenti a 2 decimali, formattazione € it_IT,
       **numerazione progressiva per anno** assegnata all'emissione (RPC atomica
       con advisory lock). Tutte le azioni sono **gated da permessi** (vedi sotto).
-      Mancano (step successivi): CRUD avanzato/note di credito e **export XML
-      FatturaPA**.
+- [~] **Fatturazione (STEP 2 — gestione interna)**: ricerca e filtri per stato
+      sulla lista, **KPI di riepilogo** (documenti, emesso netto, incassato,
+      scadute), evidenza fatture **scadute** (oltre la data di scadenza),
+      **note di credito (TD04)** collegate alla fattura d'origine, **duplica
+      documento**, ricerca clienti. Manca (step finale): **export XML FatturaPA**.
 - [x] **Permessi configurabili (stile Odoo)**: tabelle `permissions` /
       `role_permissions` (default globali + override per azienda), schermata
       *Impostazioni → Permessi* per attivare/disattivare i permessi per ruolo.

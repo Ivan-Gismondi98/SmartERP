@@ -118,6 +118,7 @@ class Invoice {
     this.notes,
     this.numberingYear,
     this.numberingSeq,
+    this.referenceInvoiceId,
     List<InvoiceItem>? items,
   })  : issueDate = issueDate ?? DateTime.now(),
         items = items ?? [];
@@ -138,12 +139,23 @@ class Invoice {
   String? notes;
   int? numberingYear;
   int? numberingSeq;
+  String? referenceInvoiceId;
   List<InvoiceItem> items;
 
   bool get isDraft => status == InvoiceStatus.draft;
   bool get isIssued => !isDraft;
 
+  bool get isCreditNote => documentType == 'TD04';
+  String get documentTypeLabel =>
+      isCreditNote ? 'Nota di credito' : 'Fattura';
+
   String get displayNumber => invoiceNumber ?? 'BOZZA';
+
+  /// Scaduta: emessa, non pagata/annullata e con scadenza passata.
+  bool overdueAt(DateTime now) =>
+      status == InvoiceStatus.sent &&
+      dueDate != null &&
+      dueDate!.isBefore(DateTime(now.year, now.month, now.day));
 
   // ---------- Calcolo fiscale ----------
 
@@ -214,6 +226,7 @@ class Invoice {
       notes: j['notes'] as String?,
       numberingYear: (j['numbering_year'] as num?)?.toInt(),
       numberingSeq: (j['numbering_seq'] as num?)?.toInt(),
+      referenceInvoiceId: j['reference_invoice_id'] as String?,
       items: items,
     );
   }
@@ -222,8 +235,8 @@ class Invoice {
   Map<String, dynamic> toJson() => {
         'company_id': companyId,
         'customer_id': customerId,
-        'status': status.db,
         'document_type': documentType,
+        'status': status.db,
         'issue_date': _d(issueDate),
         'due_date': dueDate == null ? null : _d(dueDate!),
         'subtotal': subtotal,
@@ -234,6 +247,7 @@ class Invoice {
         'payment_method': paymentMethod,
         'payment_terms': paymentTerms,
         'notes': notes,
+        'reference_invoice_id': referenceInvoiceId,
       };
 
   static String _d(DateTime d) =>

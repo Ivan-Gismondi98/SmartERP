@@ -22,6 +22,7 @@ class InvoiceDetailPage extends ConsumerWidget {
     final canEdit = ref.watch(canProvider(Perm.invoicesEdit));
     final canIssue = ref.watch(canProvider(Perm.invoicesIssue));
     final canDelete = ref.watch(canProvider(Perm.invoicesDelete));
+    final canCreate = ref.watch(canProvider(Perm.invoicesCreate));
 
     return Scaffold(
       appBar: AppBar(
@@ -35,6 +36,7 @@ class InvoiceDetailPage extends ConsumerWidget {
           canEdit: canEdit,
           canIssue: canIssue,
           canDelete: canDelete,
+          canCreate: canCreate,
           onChanged: () => ref.invalidate(invoiceDetailProvider(invoiceId)),
         ),
       ),
@@ -48,6 +50,7 @@ class _DetailBody extends ConsumerWidget {
     required this.canEdit,
     required this.canIssue,
     required this.canDelete,
+    required this.canCreate,
     required this.onChanged,
   });
 
@@ -55,6 +58,7 @@ class _DetailBody extends ConsumerWidget {
   final bool canEdit;
   final bool canIssue;
   final bool canDelete;
+  final bool canCreate;
   final VoidCallback onChanged;
 
   @override
@@ -71,7 +75,7 @@ class _DetailBody extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Fattura ${inv.displayNumber}',
+                  Text('${inv.documentTypeLabel} ${inv.displayNumber}',
                       style: theme.textTheme.headlineSmall),
                   Chip(label: Text(inv.status.label)),
                 ],
@@ -146,6 +150,18 @@ class _DetailBody extends ConsumerWidget {
                     icon: const Icon(Icons.block),
                     label: const Text('Annulla'),
                   ),
+                if (canCreate)
+                  OutlinedButton.icon(
+                    onPressed: () => _duplicate(context, ref, false),
+                    icon: const Icon(Icons.copy_all_outlined),
+                    label: const Text('Duplica'),
+                  ),
+                if (inv.isIssued && !inv.isCreditNote && canCreate)
+                  OutlinedButton.icon(
+                    onPressed: () => _duplicate(context, ref, true),
+                    icon: const Icon(Icons.undo),
+                    label: const Text('Nota di credito'),
+                  ),
               ],
             ),
           ),
@@ -193,6 +209,21 @@ class _DetailBody extends ConsumerWidget {
       if (context.mounted) {
         _snack(context, 'Fattura emessa: n. $number');
       }
+      onChanged();
+    } catch (e) {
+      if (context.mounted) _snack(context, 'Errore: $e');
+    }
+  }
+
+  Future<void> _duplicate(
+      BuildContext context, WidgetRef ref, bool asCreditNote) async {
+    final repo = ref.read(invoicesRepositoryProvider);
+    try {
+      final newId = await repo.duplicateFrom(inv, asCreditNote: asCreditNote);
+      if (!context.mounted) return;
+      await Navigator.of(context).push<bool>(
+        MaterialPageRoute(builder: (_) => InvoiceFormPage(invoiceId: newId)),
+      );
       onChanged();
     } catch (e) {
       if (context.mounted) _snack(context, 'Errore: $e');
