@@ -151,6 +151,7 @@ class Invoice {
     this.referenceInvoiceId,
     this.sdiStatus = 'not_sent',
     this.sdiSentAt,
+    this.templateId,
     List<InvoiceItem>? items,
   })  : issueDate = issueDate ?? DateTime.now(),
         items = items ?? [];
@@ -177,6 +178,7 @@ class Invoice {
   String? referenceInvoiceId;
   String sdiStatus;
   DateTime? sdiSentAt;
+  String? templateId;
   List<InvoiceItem> items;
 
   /// Etichetta leggibile dello stato di trasmissione SdI.
@@ -304,6 +306,7 @@ class Invoice {
       sdiSentAt: j['sdi_sent_at'] == null
           ? null
           : DateTime.tryParse(j['sdi_sent_at'] as String),
+      templateId: j['template_id'] as String?,
       items: items,
     );
   }
@@ -328,6 +331,7 @@ class Invoice {
         'interest_rate': interestRate,
         'notes': notes,
         'reference_invoice_id': referenceInvoiceId,
+        'template_id': templateId,
       };
 
   static String _d(DateTime d) =>

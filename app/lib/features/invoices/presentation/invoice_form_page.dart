@@ -11,6 +11,7 @@ import '../../customers/domain/customer.dart';
 import '../../products/application/products_providers.dart';
 import '../../products/domain/product.dart';
 import '../../profile/application/profile_providers.dart';
+import '../../studio/application/templates_providers.dart';
 import '../data/invoices_repository.dart';
 import '../domain/invoice.dart';
 import '../domain/vat.dart';
@@ -124,6 +125,7 @@ class _InvoiceFormPageState extends ConsumerState<InvoiceFormPage> {
     final inv = _draft!;
     final customersAsync = ref.watch(customersListProvider);
     final products = ref.watch(productsListProvider).valueOrNull ?? const [];
+    final templates = ref.watch(templatesListProvider).valueOrNull ?? const [];
 
     return Scaffold(
       appBar: AppBar(
@@ -198,6 +200,22 @@ class _InvoiceFormPageState extends ConsumerState<InvoiceFormPage> {
               value: inv.interestRate ?? 0,
               onChanged: (v) => setState(() => inv.interestRate = v),
             ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String?>(
+            initialValue: inv.templateId,
+            isExpanded: true,
+            decoration: const InputDecoration(
+                labelText: 'Modello documento (Studio)'),
+            items: [
+              const DropdownMenuItem<String?>(
+                  value: null, child: Text('Standard')),
+              for (final t in templates)
+                DropdownMenuItem<String?>(
+                    value: t.id,
+                    child: Text(t.name + (t.isDefault ? ' (default)' : ''))),
+            ],
+            onChanged: (v) => setState(() => inv.templateId = v),
+          ),
           const Divider(height: 32),
 
           // --- Righe ---

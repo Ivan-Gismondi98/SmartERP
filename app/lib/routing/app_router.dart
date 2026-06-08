@@ -19,6 +19,7 @@ import '../features/invoices/presentation/invoices_page.dart';
 import '../features/products/presentation/products_page.dart';
 import '../features/settings/presentation/permissions_settings_page.dart';
 import '../features/settings/presentation/settings_page.dart';
+import '../features/studio/presentation/studio_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Notifier che fa rivalutare il redirect a ogni cambio di sessione.
@@ -48,6 +49,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/customers', builder: (_, __) => const CustomersPage()),
       GoRoute(path: '/products', builder: (_, __) => const ProductsPage()),
       GoRoute(path: '/chat', builder: (_, __) => const ChatRoomsPage()),
+      GoRoute(path: '/studio', builder: (_, __) => const StudioPage()),
       GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()),
       GoRoute(
         path: '/settings/permissions',

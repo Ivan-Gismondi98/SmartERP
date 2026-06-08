@@ -207,8 +207,13 @@ reale (firmandole con il tuo `JWT_SECRET`) e aggiorna di conseguenza
       **immagine** (URL) e **descrizione** + toggle *"mostra nei documenti"*.
       Nel PDF le righe con flag usano un **layout catalogo** (titolo → immagine
       a sx, descrizione a dx + qtà/prezzo/totale); la descrizione è editabile
-      dalla riga fattura. Prossimi step: app "Studio" (modelli grafici salvabili)
-      ed export **Word (.docx)**.
+      dalla riga fattura.
+- [~] **App "Studio" (STEP 10)**: modelli grafici salvabili (`document_templates`)
+      per i documenti — testo header/footer, logo on/off, colore override,
+      stile righe (auto/catalogo/compatto), riepilogo IVA on/off, modello
+      predefinito. Si sceglie il modello (Standard o salvato) dentro la fattura
+      (`invoices.template_id`) e viene applicato al PDF. Gated da `studio.*`.
+      Prossimo step: export **Word (.docx)**.
 - [~] **Branding per-tenant nei PDF (STEP 7)**: colori e logo presi da
       `companies.theme_settings` applicati al PDF fattura (intestazione, linea,
       totali, logo). Pagina *Impostazioni → Branding aziendale* per impostarli

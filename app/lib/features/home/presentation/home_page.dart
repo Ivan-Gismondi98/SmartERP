@@ -42,6 +42,8 @@ const _modules = <_Module>[
   _Module('Fornitori', Icons.local_shipping_outlined),
   _Module('Chat', Icons.chat_bubble_outline,
       route: '/chat', requiredPermission: Perm.chatView),
+  _Module('Studio', Icons.dashboard_customize_outlined,
+      route: '/studio', requiredPermission: Perm.studioView),
   _Module('Impostazioni', Icons.settings_outlined,
       route: '/settings', staffOnly: false),
 ];

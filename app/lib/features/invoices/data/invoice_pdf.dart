@@ -9,6 +9,7 @@ import 'package:printing/printing.dart';
 
 import '../../../core/format.dart';
 import '../../profile/domain/profile.dart';
+import '../../studio/domain/document_template.dart';
 import '../domain/invoice.dart';
 
 class InvoicePdfGenerator {
@@ -23,15 +24,21 @@ class InvoicePdfGenerator {
     return v == null ? fallback : PdfColor.fromInt(0xff000000 | v);
   }
 
-  Future<List<int>> build(Invoice inv, Company seller, {DateTime? now}) async {
+  Future<List<int>> build(Invoice inv, Company seller,
+      {DocumentTemplate? template, DateTime? now}) async {
     final today = now ?? DateTime.now();
     final doc = pw.Document();
     final interest = inv.interestAmount(today);
-    final brand = _hex(seller.brandPrimaryHex, PdfColors.blue900);
+    // Colore: override del modello se presente, altrimenti branding azienda.
+    final brand = _hex(template?.primaryHex ?? seller.brandPrimaryHex,
+        PdfColors.blue900);
+    final lineStyle = template?.lineStyle ?? 'auto';
+    final showVat = template?.showVatSummary ?? true;
+    final showLogo = template?.showLogo ?? true;
 
-    // Logo per-tenant (se impostato e raggiungibile).
+    // Logo per-tenant (se impostato, abilitato dal modello e raggiungibile).
     pw.ImageProvider? logo;
-    if (seller.logoUrl != null) {
+    if (showLogo && seller.logoUrl != null) {
       try {
         logo = await networkImage(seller.logoUrl!);
       } catch (_) {
@@ -39,9 +46,14 @@ class InvoicePdfGenerator {
       }
     }
 
-    // Pre-carica le immagini dei prodotti in "stile catalogo" (dedup per URL).
+    // Pre-carica le immagini prodotto necessarie (dedup per URL).
+    // In stile 'auto' solo le righe con flag; in 'catalog' tutte quelle con URL.
     final images = <String, pw.ImageProvider>{};
-    for (final it in inv.items.where((i) => i.isCatalog)) {
+    for (final it in inv.items) {
+      final wantImg = lineStyle == 'catalog'
+          ? (it.productImageUrl != null && it.productImageUrl!.trim().isNotEmpty)
+          : it.isCatalog;
+      if (!wantImg) continue;
       final url = it.productImageUrl!.trim();
       if (images.containsKey(url)) continue;
       try {
@@ -49,24 +61,35 @@ class InvoicePdfGenerator {
       } catch (_) {/* immagine non raggiungibile: si ignora */}
     }
 
+    final headerText = template?.headerText ?? '';
+    final footerText = template?.footerText ?? '';
+
     doc.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(32),
         build: (context) => [
           _header(seller, inv, brand, logo),
+          if (headerText.isNotEmpty) ...[
+            pw.SizedBox(height: 4),
+            pw.Text(headerText,
+                style: pw.TextStyle(
+                    fontSize: 11,
+                    fontStyle: pw.FontStyle.italic,
+                    color: PdfColors.grey700)),
+          ],
           pw.SizedBox(height: 6),
           pw.Container(height: 3, color: brand),
           pw.SizedBox(height: 16),
           _parties(seller, inv),
           pw.SizedBox(height: 16),
-          _items(inv, brand, images),
+          _items(inv, brand, images, lineStyle),
           pw.SizedBox(height: 12),
           pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
-              _vatSummary(inv),
+              if (showVat) _vatSummary(inv) else pw.SizedBox(),
               _totals(inv, interest, today, brand),
             ],
           ),
@@ -80,10 +103,21 @@ class InvoicePdfGenerator {
             pw.Text(inv.notes!),
           ],
         ],
-        footer: (context) => pw.Align(
-          alignment: pw.Alignment.centerRight,
-          child: pw.Text('Pag. ${context.pageNumber}/${context.pagesCount}',
-              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
+        footer: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+          mainAxisSize: pw.MainAxisSize.min,
+          children: [
+            if (footerText.isNotEmpty)
+              pw.Text(footerText,
+                  style:
+                      const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
+            pw.SizedBox(height: 2),
+            pw.Align(
+              alignment: pw.Alignment.centerRight,
+              child: pw.Text('Pag. ${context.pageNumber}/${context.pagesCount}',
+                  style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
+            ),
+          ],
         ),
       ),
     );
@@ -161,12 +195,19 @@ class InvoicePdfGenerator {
 
   /// Righe del documento: blocco "catalogo" (titolo + immagine + descrizione)
   /// per i prodotti con flag attivo, riga compatta per gli altri.
-  pw.Widget _items(
-      Invoice inv, PdfColor brand, Map<String, pw.ImageProvider> images) {
+  pw.Widget _items(Invoice inv, PdfColor brand,
+      Map<String, pw.ImageProvider> images, String lineStyle) {
     final widgets = <pw.Widget>[];
     for (final it in inv.items) {
-      if (it.isCatalog) {
-        widgets.add(_catalogLine(it, brand, images[it.productImageUrl!.trim()]));
+      final asCatalog = switch (lineStyle) {
+        'catalog' => true,
+        'compact' => false,
+        _ => it.isCatalog,
+      };
+      if (asCatalog) {
+        final url = it.productImageUrl?.trim();
+        widgets.add(_catalogLine(
+            it, brand, url == null ? null : images[url]));
       } else {
         widgets.add(_compactLine(it));
       }

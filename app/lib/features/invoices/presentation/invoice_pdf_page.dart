@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 
 import '../../profile/application/profile_providers.dart';
+import '../../studio/application/templates_providers.dart';
 import '../data/invoice_pdf.dart';
 import '../domain/invoice.dart';
 
@@ -31,10 +32,17 @@ class InvoicePdfPage extends ConsumerWidget {
             return const Center(
                 child: Text('Dati azienda mancanti per la stampa.'));
           }
+          // Carica il modello scelto (se presente) per applicarlo al PDF.
+          final templateAsync = invoice.templateId == null
+              ? null
+              : ref.watch(templateByIdProvider(invoice.templateId!));
+          final template = templateAsync?.valueOrNull;
+
           return PdfPreview(
+            key: ValueKey(template?.id ?? 'standard'),
             build: (format) async {
               final bytes = await const InvoicePdfGenerator()
-                  .build(invoice, company);
+                  .build(invoice, company, template: template);
               return Uint8List.fromList(bytes);
             },
             canChangePageFormat: false,

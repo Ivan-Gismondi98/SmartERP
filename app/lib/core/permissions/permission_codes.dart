@@ -30,6 +30,9 @@ class Perm {
   static const chatManage = 'chat.manage';
   static const chatVideo = 'chat.video';
 
+  static const studioView = 'studio.view';
+  static const studioManage = 'studio.manage';
+
   static const settingsPermissionsManage = 'settings.permissions.manage';
   static const settingsCompanyManage = 'settings.company.manage';
 }
