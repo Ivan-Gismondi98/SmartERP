@@ -232,6 +232,17 @@ curl.exe -s -X POST "http://localhost:8000/auth/v1/signup" -H "apikey: $KEY" -H 
 docker exec smarterp-db psql -U postgres -d postgres -c "update public.profiles set role='admin', company_id='00000000-0000-0000-0000-000000000001' where id=(select id from auth.users where email='admin@smarterp.local');"
 ```
 
+### (Solo la prima volta) Migrazione STEP 1 — fatture e permessi
+
+Crea anagrafica clienti, campi fiscali fattura, numerazione progressiva e il
+sistema permessi. Da eseguire DOPO `99_smarterp_post_auth.sql`:
+
+```powershell
+docker exec -i smarterp-db psql -U postgres -d postgres < volumes/db/post-init/02_step1_fatture_permessi.sql
+# PostgREST deve ricaricare lo schema per vedere la nuova funzione RPC:
+docker exec smarterp-db psql -U postgres -d postgres -c "NOTIFY pgrst, 'reload schema';"
+```
+
 ### Test su Emulatore Android (opzionale)
 
 ```powershell

@@ -162,6 +162,18 @@ reale (firmandole con il tuo `JWT_SECRET`) e aggiorna di conseguenza
 - [ ] **Service chat realtime in streaming**: sottoscrizione
       `supabase.from('chat_messages').stream(primaryKey: ['id'])` filtrata per
       `room_id`, con invio messaggi e indicatore "sta scrivendo".
+- [~] **Fatturazione (STEP 1 — core fiscale)**: anagrafica clienti con dati
+      fiscali (P.IVA con checksum, CF, Codice Destinatario SdI, PEC), fatture
+      con righe, **IVA calcolata per aliquota** (riepilogo SdI) + codici
+      **Natura** (N1–N7) per le righe a 0%, **bollo** €2 automatico oltre
+      €77,47 di esente, arrotondamenti a 2 decimali, formattazione € it_IT,
+      **numerazione progressiva per anno** assegnata all'emissione (RPC atomica
+      con advisory lock). Tutte le azioni sono **gated da permessi** (vedi sotto).
+      Mancano (step successivi): CRUD avanzato/note di credito e **export XML
+      FatturaPA**.
+- [x] **Permessi configurabili (stile Odoo)**: tabelle `permissions` /
+      `role_permissions` (default globali + override per azienda), schermata
+      *Impostazioni → Permessi* per attivare/disattivare i permessi per ruolo.
 - [ ] **Motore di stampa client-side**: usare i pacchetti `pdf` + `printing`
       per i PDF e `docx_template` per i documenti Word, iniettando i colori e
       il logo presi da `companies.theme_settings` (branding per-tenant).

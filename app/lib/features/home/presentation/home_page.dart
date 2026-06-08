@@ -5,26 +5,42 @@
 // ============================================================
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/permissions/permission_codes.dart';
+import '../../../core/permissions/permissions_providers.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../profile/application/profile_providers.dart';
 import '../../profile/domain/profile.dart';
 
 /// Modulo del gestionale mostrato come tile nella dashboard.
 class _Module {
-  const _Module(this.label, this.icon, {this.staffOnly = true});
+  const _Module(this.label, this.icon,
+      {this.route, this.requiredPermission, this.staffOnly = true});
   final String label;
   final IconData icon;
+
+  /// Rotta da aprire (null = modulo non ancora implementato).
+  final String? route;
+
+  /// Permesso necessario per vedere il modulo (null = nessuno).
+  final String? requiredPermission;
+
+  /// Visibile solo allo staff (admin/employee/super_admin).
   final bool staffOnly;
 }
 
 const _modules = <_Module>[
-  _Module('Fatture', Icons.receipt_long_outlined),
+  _Module('Fatture', Icons.receipt_long_outlined,
+      route: '/invoices', requiredPermission: Perm.invoicesView),
+  _Module('Clienti', Icons.people_alt_outlined,
+      route: '/customers', requiredPermission: Perm.customersView),
   _Module('Magazzino', Icons.inventory_2_outlined),
   _Module('Prodotti', Icons.sell_outlined),
   _Module('Fornitori', Icons.local_shipping_outlined),
   _Module('Chat', Icons.chat_bubble_outline),
-  _Module('Impostazioni', Icons.settings_outlined, staffOnly: false),
+  _Module('Impostazioni', Icons.settings_outlined,
+      route: '/settings', staffOnly: false),
 ];
 
 class HomePage extends ConsumerWidget {
@@ -54,17 +70,25 @@ class HomePage extends ConsumerWidget {
   }
 }
 
-class _DashboardBody extends StatelessWidget {
+class _DashboardBody extends ConsumerWidget {
   const _DashboardBody({required this.profile});
 
   final Profile? profile;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final role = profile?.role ?? UserRole.customer;
-    final visibleModules =
-        _modules.where((m) => !m.staffOnly || role.isStaff).toList();
+    final perms = ref.watch(allowedPermissionsProvider).valueOrNull ?? const {};
+
+    final visibleModules = _modules.where((m) {
+      if (m.staffOnly && !role.isStaff) return false;
+      if (m.requiredPermission != null &&
+          !perms.contains(m.requiredPermission)) {
+        return false;
+      }
+      return true;
+    }).toList();
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -84,7 +108,7 @@ class _DashboardBody extends StatelessWidget {
             for (final m in visibleModules)
               _ModuleTile(
                 module: m,
-                onTap: () => _comingSoon(context, m.label),
+                onTap: () => _open(context, m),
               ),
           ],
         ),
@@ -99,12 +123,16 @@ class _DashboardBody extends StatelessWidget {
     return 2;
   }
 
-  void _comingSoon(BuildContext context, String label) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text('Modulo "$label" in arrivo.')),
-      );
+  void _open(BuildContext context, _Module m) {
+    if (m.route != null) {
+      context.push(m.route!);
+    } else {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text('Modulo "${m.label}" in arrivo.')),
+        );
+    }
   }
 }
 
