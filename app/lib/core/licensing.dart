@@ -10,7 +10,9 @@ import '../features/profile/domain/profile.dart';
 import 'supabase_providers.dart';
 
 /// App soggette a licenza (codici = nomi modulo).
-const kAppModules = <String>{'invoices', 'customers', 'products', 'chat', 'studio'};
+const kAppModules = <String>{
+  'invoices', 'customers', 'products', 'chat', 'studio', 'assistant'
+};
 
 /// Insieme dei codici app abilitati per l'organizzazione corrente.
 /// super_admin: tutte. Altri: dalle licenze attive (suite => tutte).

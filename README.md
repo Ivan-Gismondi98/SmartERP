@@ -291,6 +291,15 @@ reale (firmandole con il tuo `JWT_SECRET`) e aggiorna di conseguenza
       upload via `file_picker`, anteprima immagini in-app). RLS: visibile a chi
       vede il ticket.
 
+### Assistente IA
+- [x] **Assistente IA (STEP 16)**: app **license-gated** (`app_code = assistant`)
+      che compare **in fondo a ogni pagina**. Risponde su come usare le
+      pagine/operazioni leggendo i documenti `.md` per applicativo
+      (`assets/assistant/*.md`), **filtrando per ruolo, permessi e licenze**
+      (se un'operazione è riservata, lo dice). La **conversazione persiste**
+      cambiando app. Motore di retrieval locale (veloce, offline); predisposto
+      per innestare un LLM server-side in futuro.
+
 ### DevOps
 - [ ] Reverse proxy HTTPS (Caddy/Traefik) + certificati per la produzione.
 - [ ] Backup automatici schedulati di `smarterp_db_data` (`pg_dump`).
