@@ -81,6 +81,20 @@ class Company {
     return v.toUpperCase().startsWith('IT') ? v.substring(2) : v;
   }
 
+  // ----- Branding per-tenant (theme_settings) -----
+  String? _s(String k) {
+    final v = themeSettings[k];
+    return (v is String && v.trim().isNotEmpty) ? v.trim() : null;
+  }
+
+  /// Colore primario in formato esadecimale "#RRGGBB" (default brand SmartERP).
+  String get brandPrimaryHex => _s('primary') ?? '#0D47A1';
+  String get brandSecondaryHex => _s('secondary') ?? '#FB8C00';
+  String get brandAccentHex => _s('accent') ?? '#2E7D32';
+
+  /// URL del logo (se impostato).
+  String? get logoUrl => _s('logo_url');
+
   factory Company.fromJson(Map<String, dynamic> json) {
     return Company(
       id: json['id'] as String,

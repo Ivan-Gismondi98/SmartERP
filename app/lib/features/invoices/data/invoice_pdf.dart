@@ -5,6 +5,7 @@
 // ============================================================
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import '../../../core/format.dart';
 import '../../profile/domain/profile.dart';
@@ -13,17 +14,39 @@ import '../domain/invoice.dart';
 class InvoicePdfGenerator {
   const InvoicePdfGenerator();
 
+  /// Converte "#RRGGBB" in PdfColor (con fallback).
+  PdfColor _hex(String? hex, PdfColor fallback) {
+    if (hex == null) return fallback;
+    final h = hex.replaceAll('#', '').trim();
+    if (h.length != 6) return fallback;
+    final v = int.tryParse(h, radix: 16);
+    return v == null ? fallback : PdfColor.fromInt(0xff000000 | v);
+  }
+
   Future<List<int>> build(Invoice inv, Company seller, {DateTime? now}) async {
     final today = now ?? DateTime.now();
     final doc = pw.Document();
     final interest = inv.interestAmount(today);
+    final brand = _hex(seller.brandPrimaryHex, PdfColors.blue900);
+
+    // Logo per-tenant (se impostato e raggiungibile).
+    pw.ImageProvider? logo;
+    if (seller.logoUrl != null) {
+      try {
+        logo = await networkImage(seller.logoUrl!);
+      } catch (_) {
+        logo = null;
+      }
+    }
 
     doc.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(32),
         build: (context) => [
-          _header(seller, inv),
+          _header(seller, inv, brand, logo),
+          pw.SizedBox(height: 6),
+          pw.Container(height: 3, color: brand),
           pw.SizedBox(height: 16),
           _parties(seller, inv),
           pw.SizedBox(height: 16),
@@ -34,7 +57,7 @@ class InvoicePdfGenerator {
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
               _vatSummary(inv),
-              _totals(inv, interest, today),
+              _totals(inv, interest, today, brand),
             ],
           ),
           if (interest > 0) ...[
@@ -58,7 +81,8 @@ class InvoicePdfGenerator {
     return doc.save();
   }
 
-  pw.Widget _header(Company seller, Invoice inv) {
+  pw.Widget _header(
+      Company seller, Invoice inv, PdfColor brand, pw.ImageProvider? logo) {
     return pw.Row(
       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -66,9 +90,16 @@ class InvoicePdfGenerator {
         pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
+            if (logo != null)
+              pw.Padding(
+                padding: const pw.EdgeInsets.only(bottom: 6),
+                child: pw.Image(logo, height: 48),
+              ),
             pw.Text(seller.name,
                 style: pw.TextStyle(
-                    fontSize: 16, fontWeight: pw.FontWeight.bold)),
+                    fontSize: 16,
+                    fontWeight: pw.FontWeight.bold,
+                    color: brand)),
             if (seller.vatNumber != null) pw.Text('P.IVA ${seller.vatNumber}'),
             if (seller.address != null)
               pw.Text(
@@ -80,7 +111,7 @@ class InvoicePdfGenerator {
           children: [
             pw.Text(inv.documentTypeLabel.toUpperCase(),
                 style: pw.TextStyle(
-                    fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                    fontSize: 18, fontWeight: pw.FontWeight.bold, color: brand)),
             pw.Text('N. ${inv.displayNumber}'),
             pw.Text('Data ${Fmt.date(inv.issueDate)}'),
             if (inv.dueDate != null)
@@ -181,19 +212,22 @@ class InvoicePdfGenerator {
     );
   }
 
-  pw.Widget _totals(Invoice inv, double interest, DateTime now) {
+  pw.Widget _totals(
+      Invoice inv, double interest, DateTime now, PdfColor brand) {
     pw.Widget line(String l, String v, {bool bold = false}) => pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
             pw.Text(l,
                 style: pw.TextStyle(
                     fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
-                    fontSize: bold ? 12 : 10)),
+                    fontSize: bold ? 12 : 10,
+                    color: bold ? brand : null)),
             pw.SizedBox(width: 24),
             pw.Text(v,
                 style: pw.TextStyle(
                     fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
-                    fontSize: bold ? 12 : 10)),
+                    fontSize: bold ? 12 : 10,
+                    color: bold ? brand : null)),
           ],
         );
 

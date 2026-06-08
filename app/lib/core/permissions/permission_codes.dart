@@ -26,4 +26,5 @@ class Perm {
   static const productsDelete = 'products.delete';
 
   static const settingsPermissionsManage = 'settings.permissions.manage';
+  static const settingsCompanyManage = 'settings.company.manage';
 }

@@ -201,9 +201,11 @@ reale (firmandole con il tuo `JWT_SECRET`) e aggiorna di conseguenza
       **interessi di mora** configurabili (tasso annuo) calcolati sul ritardo
       per le fatture scadute (mostrati in dettaglio e in PDF). Stampa gated da
       `invoices.print`.
-- [ ] **Motore di stampa client-side**: usare i pacchetti `pdf` + `printing`
-      per i PDF e `docx_template` per i documenti Word, iniettando i colori e
-      il logo presi da `companies.theme_settings` (branding per-tenant).
+- [~] **Branding per-tenant nei PDF (STEP 7)**: colori e logo presi da
+      `companies.theme_settings` applicati al PDF fattura (intestazione, linea,
+      totali, logo). Pagina *Impostazioni → Branding aziendale* per impostarli
+      (gated da `settings.company.manage`). Resta: template Word (`docx_template`)
+      e branding del tema app.
 - [x] **Magazzino/Prodotti (STEP 5)**: CRUD prodotti con **giacenze**
       (`inventory`), badge giacenza + evidenza **sotto scorta**, ricerca e
       filtro, RLS company-isolation. Riga fattura collegabile a un prodotto e

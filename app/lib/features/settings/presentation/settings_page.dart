@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
+import 'company_branding_page.dart';
 import 'module_settings_page.dart';
 import 'permissions_settings_page.dart';
 
@@ -22,12 +23,22 @@ class SettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final canManage = ref.watch(canProvider(Perm.settingsPermissionsManage));
+    final canCompany = ref.watch(canProvider(Perm.settingsCompanyManage));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Impostazioni')),
       body: ListView(
         children: [
           _sectionHeader(context, 'Generali'),
+          if (canCompany)
+            ListTile(
+              leading: const Icon(Icons.palette_outlined),
+              title: const Text('Branding aziendale'),
+              subtitle: const Text('Colori e logo applicati ai PDF'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const CompanyBrandingPage())),
+            ),
           if (canManage)
             ListTile(
               leading: const Icon(Icons.admin_panel_settings_outlined),
