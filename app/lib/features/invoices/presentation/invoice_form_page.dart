@@ -325,12 +325,15 @@ class _ItemEditorState extends State<_ItemEditor> {
         return;
       }
       final p = widget.products.firstWhere((e) => e.id == id);
+      final desc = (p.description != null && p.description!.trim().isNotEmpty)
+          ? p.description!.trim()
+          : p.name;
       item.productId = p.id;
-      item.description = p.name;
+      item.description = desc;
       item.unitPrice = p.unitPrice;
       item.vatRate = p.vatRate;
       if (p.vatRate != 0) item.vatNature = null;
-      _desc.text = p.name;
+      _desc.text = desc;
       _price.text = p.unitPrice == 0 ? '' : Fmt.amount(p.unitPrice);
     });
     widget.onChanged();

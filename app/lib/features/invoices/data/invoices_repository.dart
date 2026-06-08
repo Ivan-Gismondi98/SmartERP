@@ -36,7 +36,8 @@ class InvoicesRepository {
         .from('invoices')
         .select('$_invoiceSelect, invoice_items ( id, position, product_id, '
             'description, quantity, unit_price, vat_rate, vat_nature, '
-            'discount_percent, line_total )')
+            'discount_percent, line_total, '
+            'products ( name, image_url, show_in_documents ) )')
         .eq('id', id)
         .single();
     return Invoice.fromJson(row);

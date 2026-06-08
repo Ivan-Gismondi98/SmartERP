@@ -12,6 +12,8 @@ class Product {
     this.vatRate = 22,
     this.unit = 'pz',
     this.isComposable = false,
+    this.imageUrl,
+    this.showInDocuments = false,
     this.quantity = 0,
     this.reorderLevel = 0,
     this.warehouseLocation,
@@ -26,6 +28,8 @@ class Product {
   final double vatRate;
   final String unit;
   final bool isComposable;
+  final String? imageUrl;
+  final bool showInDocuments;
 
   // Giacenza (tabella inventory).
   final int quantity;
@@ -54,6 +58,8 @@ class Product {
       vatRate: (j['vat_rate'] as num?)?.toDouble() ?? 22,
       unit: (j['unit'] as String?) ?? 'pz',
       isComposable: (j['is_composable'] as bool?) ?? false,
+      imageUrl: j['image_url'] as String?,
+      showInDocuments: (j['show_in_documents'] as bool?) ?? false,
       quantity: (inv?['quantity'] as num?)?.toInt() ?? 0,
       reorderLevel: (inv?['reorder_level'] as num?)?.toInt() ?? 0,
       warehouseLocation: inv?['warehouse_location'] as String?,
@@ -70,6 +76,9 @@ class Product {
         'vat_rate': vatRate,
         'unit': unit,
         'is_composable': isComposable,
+        'image_url':
+            (imageUrl == null || imageUrl!.trim().isEmpty) ? null : imageUrl!.trim(),
+        'show_in_documents': showInDocuments,
       };
 
   Map<String, dynamic> inventoryJson() => {

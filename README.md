@@ -203,6 +203,12 @@ reale (firmandole con il tuo `JWT_SECRET`) e aggiorna di conseguenza
       **interessi di mora** configurabili (tasso annuo) calcolati sul ritardo
       per le fatture scadute (mostrati in dettaglio e in PDF). Stampa gated da
       `invoices.print`.
+- [~] **Catalogo / media prodotto (STEP 9)**: ogni prodotto può avere
+      **immagine** (URL) e **descrizione** + toggle *"mostra nei documenti"*.
+      Nel PDF le righe con flag usano un **layout catalogo** (titolo → immagine
+      a sx, descrizione a dx + qtà/prezzo/totale); la descrizione è editabile
+      dalla riga fattura. Prossimi step: app "Studio" (modelli grafici salvabili)
+      ed export **Word (.docx)**.
 - [~] **Branding per-tenant nei PDF (STEP 7)**: colori e logo presi da
       `companies.theme_settings` applicati al PDF fattura (intestazione, linea,
       totali, logo). Pagina *Impostazioni → Branding aziendale* per impostarli

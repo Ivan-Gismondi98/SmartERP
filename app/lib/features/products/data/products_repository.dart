@@ -9,7 +9,8 @@ import '../domain/bom_component.dart';
 import '../domain/product.dart';
 
 const _select = 'id, company_id, sku, name, description, unit_price, vat_rate, '
-    'unit, is_composable, inventory ( quantity, reorder_level, warehouse_location )';
+    'unit, is_composable, image_url, show_in_documents, '
+    'inventory ( quantity, reorder_level, warehouse_location )';
 
 class ProductsRepository {
   ProductsRepository(this._client);

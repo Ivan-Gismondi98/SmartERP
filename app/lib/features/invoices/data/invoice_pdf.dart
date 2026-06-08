@@ -39,6 +39,16 @@ class InvoicePdfGenerator {
       }
     }
 
+    // Pre-carica le immagini dei prodotti in "stile catalogo" (dedup per URL).
+    final images = <String, pw.ImageProvider>{};
+    for (final it in inv.items.where((i) => i.isCatalog)) {
+      final url = it.productImageUrl!.trim();
+      if (images.containsKey(url)) continue;
+      try {
+        images[url] = await networkImage(url);
+      } catch (_) {/* immagine non raggiungibile: si ignora */}
+    }
+
     doc.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
@@ -50,7 +60,7 @@ class InvoicePdfGenerator {
           pw.SizedBox(height: 16),
           _parties(seller, inv),
           pw.SizedBox(height: 16),
-          _itemsTable(inv),
+          _items(inv, brand, images),
           pw.SizedBox(height: 12),
           pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -149,35 +159,90 @@ class InvoicePdfGenerator {
     );
   }
 
-  pw.Widget _itemsTable(Invoice inv) {
-    final headers = ['Descrizione', 'Qtà', 'Prezzo', 'Sc.%', 'IVA', 'Importo'];
-    final rows = inv.items.map((it) {
-      return [
-        it.description,
-        Fmt.qty(it.quantity),
-        Fmt.euro(it.unitPrice),
-        it.discountPercent > 0 ? Fmt.percent(it.discountPercent) : '',
-        it.vatRate == 0
-            ? (it.vatNature?.code ?? '0%')
-            : Fmt.percent(it.vatRate),
-        Fmt.euro(it.taxableBase),
-      ];
-    }).toList();
+  /// Righe del documento: blocco "catalogo" (titolo + immagine + descrizione)
+  /// per i prodotti con flag attivo, riga compatta per gli altri.
+  pw.Widget _items(
+      Invoice inv, PdfColor brand, Map<String, pw.ImageProvider> images) {
+    final widgets = <pw.Widget>[];
+    for (final it in inv.items) {
+      if (it.isCatalog) {
+        widgets.add(_catalogLine(it, brand, images[it.productImageUrl!.trim()]));
+      } else {
+        widgets.add(_compactLine(it));
+      }
+      widgets.add(pw.Divider(color: PdfColors.grey300, height: 8));
+    }
+    return pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: widgets);
+  }
 
-    return pw.TableHelper.fromTextArray(
-      headers: headers,
-      data: rows,
-      headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10),
-      cellStyle: const pw.TextStyle(fontSize: 9),
-      headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
-      cellAlignments: {
-        0: pw.Alignment.centerLeft,
-        1: pw.Alignment.centerRight,
-        2: pw.Alignment.centerRight,
-        3: pw.Alignment.centerRight,
-        4: pw.Alignment.center,
-        5: pw.Alignment.centerRight,
-      },
+  pw.Widget _compactLine(InvoiceItem it) {
+    final iva = it.vatRate == 0
+        ? (it.vatNature?.code ?? '0%')
+        : Fmt.percent(it.vatRate);
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 2),
+      child: pw.Row(
+        children: [
+          pw.Expanded(flex: 6, child: pw.Text(it.description)),
+          pw.Expanded(
+              flex: 3,
+              child: pw.Text(
+                  '${Fmt.qty(it.quantity)} × ${Fmt.euro(it.unitPrice)}'
+                  '${it.discountPercent > 0 ? ' −${Fmt.percent(it.discountPercent)}' : ''}  · IVA $iva',
+                  style: const pw.TextStyle(fontSize: 9))),
+          pw.Expanded(
+              flex: 2,
+              child: pw.Text(Fmt.euro(it.taxableBase),
+                  textAlign: pw.TextAlign.right,
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _catalogLine(
+      InvoiceItem it, PdfColor brand, pw.ImageProvider? image) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 6),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(it.productName ?? it.description,
+              style: pw.TextStyle(
+                  fontSize: 13, fontWeight: pw.FontWeight.bold, color: brand)),
+          pw.SizedBox(height: 4),
+          pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              if (image != null)
+                pw.Container(
+                  width: 110,
+                  height: 110,
+                  margin: const pw.EdgeInsets.only(right: 12),
+                  child: pw.Image(image, fit: pw.BoxFit.cover),
+                ),
+              pw.Expanded(
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(it.description,
+                        style: const pw.TextStyle(fontSize: 10)),
+                    pw.SizedBox(height: 6),
+                    pw.Text(
+                        '${Fmt.qty(it.quantity)} × ${Fmt.euro(it.unitPrice)}'
+                        '${it.discountPercent > 0 ? '  −${Fmt.percent(it.discountPercent)}' : ''}'
+                        '   ·   IVA ${it.vatRate == 0 ? (it.vatNature?.code ?? '0%') : Fmt.percent(it.vatRate)}',
+                        style: const pw.TextStyle(fontSize: 9)),
+                    pw.SizedBox(height: 2),
+                    pw.Text('Totale riga: ${Fmt.euro(it.taxableBase)}',
+                        style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

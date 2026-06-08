@@ -27,11 +27,13 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
   late final TextEditingController _description;
   late final TextEditingController _unit;
   late final TextEditingController _warehouse;
+  late final TextEditingController _image;
 
   late double _unitPrice;
   late double _vatRate;
   late int _quantity;
   late int _reorder;
+  bool _showInDocs = false;
   bool _saving = false;
 
   bool _isComposable = false;
@@ -49,10 +51,12 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
     _description = TextEditingController(text: p?.description ?? '');
     _unit = TextEditingController(text: p?.unit ?? 'pz');
     _warehouse = TextEditingController(text: p?.warehouseLocation ?? '');
+    _image = TextEditingController(text: p?.imageUrl ?? '');
     _unitPrice = p?.unitPrice ?? 0;
     _vatRate = p?.vatRate ?? 22;
     _quantity = p?.quantity ?? 0;
     _reorder = p?.reorderLevel ?? 0;
+    _showInDocs = p?.showInDocuments ?? false;
     _isComposable = p?.isComposable ?? false;
     if (_existing != null && _isComposable) _loadBom();
   }
@@ -74,7 +78,7 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
 
   @override
   void dispose() {
-    for (final c in [_name, _sku, _description, _unit, _warehouse]) {
+    for (final c in [_name, _sku, _description, _unit, _warehouse, _image]) {
       c.dispose();
     }
     super.dispose();
@@ -99,6 +103,8 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
       vatRate: _vatRate,
       unit: _unit.text.trim().isEmpty ? 'pz' : _unit.text.trim(),
       isComposable: _isComposable,
+      imageUrl: _image.text,
+      showInDocuments: _showInDocs,
       quantity: _quantity,
       reorderLevel: _reorder,
       warehouseLocation: _warehouse.text,
@@ -297,8 +303,43 @@ class _ProductFormPageState extends ConsumerState<ProductFormPage> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _description,
-              maxLines: 2,
-              decoration: const InputDecoration(labelText: 'Descrizione'),
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Descrizione',
+                hintText: 'Mostrata nei documenti se attivo il toggle sotto',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _image,
+              decoration: const InputDecoration(
+                labelText: 'URL immagine prodotto',
+                hintText: 'https://… (PNG/JPG)',
+                prefixIcon: Icon(Icons.image_outlined),
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+            if (_image.text.trim().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    _image.text.trim(),
+                    height: 90,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Text(
+                        'Anteprima non disponibile (URL non valido o CORS).'),
+                  ),
+                ),
+              ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Mostra immagine e descrizione nei documenti'),
+              subtitle: const Text(
+                  'Layout "catalogo" in fattura/preventivo per questo prodotto'),
+              value: _showInDocs,
+              onChanged: (v) => setState(() => _showInDocs = v),
             ),
             const SizedBox(height: 12),
             Row(

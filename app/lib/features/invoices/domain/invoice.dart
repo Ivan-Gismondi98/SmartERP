@@ -38,6 +38,9 @@ class InvoiceItem {
     this.vatRate = 22,
     this.vatNature,
     this.discountPercent = 0,
+    this.productName,
+    this.productImageUrl,
+    this.productShowInDocuments = false,
   });
 
   final String? id;
@@ -49,6 +52,18 @@ class InvoiceItem {
   double vatRate;
   VatNature? vatNature;
   double discountPercent;
+
+  // Dati del prodotto collegato (sola lettura, da join) per il layout
+  // "catalogo" nei documenti.
+  final String? productName;
+  final String? productImageUrl;
+  final bool productShowInDocuments;
+
+  /// La riga va resa in stile catalogo (titolo + immagine + descrizione).
+  bool get isCatalog =>
+      productShowInDocuments &&
+      productImageUrl != null &&
+      productImageUrl!.trim().isNotEmpty;
 
   /// Imponibile della riga (netto), arrotondato a 2 decimali.
   double get taxableBase =>
@@ -64,6 +79,10 @@ class InvoiceItem {
         vatRate: (j['vat_rate'] as num?)?.toDouble() ?? 22,
         vatNature: VatNature.fromCode(j['vat_nature'] as String?),
         discountPercent: (j['discount_percent'] as num?)?.toDouble() ?? 0,
+        productName: (j['products'] as Map?)?['name'] as String?,
+        productImageUrl: (j['products'] as Map?)?['image_url'] as String?,
+        productShowInDocuments:
+            ((j['products'] as Map?)?['show_in_documents'] as bool?) ?? false,
       );
 
   Map<String, dynamic> toJson() => {
@@ -88,6 +107,9 @@ class InvoiceItem {
         vatRate: vatRate,
         vatNature: vatNature,
         discountPercent: discountPercent,
+        productName: productName,
+        productImageUrl: productImageUrl,
+        productShowInDocuments: productShowInDocuments,
       );
 }
 
