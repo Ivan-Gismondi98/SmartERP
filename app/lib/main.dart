@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'config/app_config.dart';
+import 'core/error_logger.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +24,8 @@ Future<void> main() async {
     );
     debugPrint('SmartERP avviato -> ${AppConfig.environmentLabel}'
         ' | URL: ${AppConfig.supabaseUrl}');
+    // Cattura globale degli errori → registro DB (Bug del giorno).
+    ErrorLogger.install();
   } catch (e, st) {
     initError = '$e';
     debugPrint('SmartERP: init Supabase FALLITA -> $e\n$st');

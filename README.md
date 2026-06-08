@@ -245,6 +245,20 @@ reale (firmandole con il tuo `JWT_SECRET`) e aggiorna di conseguenza
 - [ ] Profilazione moduli per ruolo + schermate vere dei moduli (oggi
       placeholder nella dashboard).
 
+### Area Sviluppatore / multi-tenant (in corso)
+- [x] **Logging errori + "Bug del giorno" (STEP 12)**: ogni errore dell'app
+      (handler globali `FlutterError`/`PlatformDispatcher` + `ErrorLogger`) viene
+      registrato in `error_logs` e consultabile in-app. Pagina **Bug del giorno**
+      con filtri **gravità/periodo/testo**. RLS: super_admin vede tutte le
+      organizzazioni, admin solo la propria. Utente sviluppatore demo:
+      `dev@smarterp.local` / `Dev12345` (ruolo super_admin). Gated `errors.view`.
+- [ ] **Licenze + dashboard Sviluppatore** (organizzazioni, licenze/app, pagato,
+      in ritardo) + **dashboard ticket/bug**.
+- [ ] **CRUD utenti/ruoli/permessi/aziende** (superadmin) via RPC sicure.
+- [ ] **Notifiche realtime** ("Notifica" dipendente→admin, admin→sviluppatore),
+      **ticket** con stato di avanzamento, **chat diretta admin↔sviluppatore**
+      con allegati, **export Excel** segnalazioni.
+
 ### DevOps
 - [ ] Reverse proxy HTTPS (Caddy/Traefik) + certificati per la produzione.
 - [ ] Backup automatici schedulati di `smarterp_db_data` (`pg_dump`).

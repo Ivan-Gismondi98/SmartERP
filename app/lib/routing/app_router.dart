@@ -13,6 +13,7 @@ import '../features/auth/application/auth_providers.dart';
 import '../features/auth/presentation/login_page.dart';
 import '../features/chat/presentation/chat_rooms_page.dart';
 import '../features/customers/presentation/customers_page.dart';
+import '../features/errors/presentation/error_logs_page.dart';
 import '../features/diagnostics/presentation/connection_check_page.dart';
 import '../features/home/presentation/home_page.dart';
 import '../features/invoices/presentation/invoices_page.dart';
@@ -50,6 +51,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/products', builder: (_, __) => const ProductsPage()),
       GoRoute(path: '/chat', builder: (_, __) => const ChatRoomsPage()),
       GoRoute(path: '/studio', builder: (_, __) => const StudioPage()),
+      GoRoute(path: '/errors', builder: (_, __) => const ErrorLogsPage()),
       GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()),
       GoRoute(
         path: '/settings/permissions',

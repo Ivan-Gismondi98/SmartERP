@@ -44,6 +44,8 @@ const _modules = <_Module>[
       route: '/chat', requiredPermission: Perm.chatView),
   _Module('Studio', Icons.dashboard_customize_outlined,
       route: '/studio', requiredPermission: Perm.studioView),
+  _Module('Bug del giorno', Icons.bug_report_outlined,
+      route: '/errors', requiredPermission: Perm.errorsView),
   _Module('Impostazioni', Icons.settings_outlined,
       route: '/settings', staffOnly: false),
 ];

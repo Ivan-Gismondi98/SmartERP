@@ -33,6 +33,8 @@ class Perm {
   static const studioView = 'studio.view';
   static const studioManage = 'studio.manage';
 
+  static const errorsView = 'errors.view';
+
   static const settingsPermissionsManage = 'settings.permissions.manage';
   static const settingsCompanyManage = 'settings.company.manage';
 }
