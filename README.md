@@ -53,6 +53,29 @@ L'SDK Flutter richiede un singolo URL. Kong unifica i servizi sotto `:8000`:
 
 ---
 
+## Stato attuale di debug / todo
+
+Controlli già eseguiti:
+- Verificato Flutter SDK e PATH (3.44.1).
+- Eseguito `flutter pub get` e risolte le dipendenze.
+- Verificato `docker compose up -d` e stack locale attivo.
+- Verificato `flutter devices` con Edge/web disponibile.
+- Eseguito il test widget smoke e passato.
+- Avviato il debug web su Edge/porta 8090 per la verifica browser.
+
+Causa individuata (08/06/2026):
+- **L'app non mostrava nulla perche' veniva avviata con `-d chrome`, ma su
+  questa macchina Chrome non e' installato** (solo Edge + Windows desktop).
+  Flutter usciva con *"No supported devices found"* senza aprire nulla.
+  Soluzione: usare `-d edge` (o `-d web-server`) / la config VS Code dedicata.
+- Backend verificato OK: `GET /rest/v1/companies` risponde `200` con la company
+  demo e il preflight CORS ritorna `Access-Control-Allow-Origin: *`.
+- `main.dart` reso difensivo: `Supabase.initialize` e' in try/catch e l'app si
+  avvia comunque mostrando l'errore in pagina (niente piu' schermo bianco muto).
+
+Rimanenti da riprendere:
+- Se serve, implementare un login demo locale reale per test funzionali.
+
 ## Avvio rapido
 
 ### 1. Prerequisiti
@@ -74,8 +97,18 @@ docker compose up -d
 ```bash
 cd app
 flutter pub get
-flutter run -d chrome --dart-define-from-file=config/dev.json
+# Verifica prima quali device hai: flutter devices
+# Usa il device disponibile (es. su questa macchina e' Edge, non Chrome):
+flutter run -d edge --dart-define-from-file=config/dev.json
+# In alternativa, senza browser specifico:
+# flutter run -d web-server --dart-define-from-file=config/dev.json
 ```
+
+> Nota: il comando `-d chrome` funziona solo se Chrome e' installato. Se
+> `flutter run -d chrome` stampa *"No supported devices found"*, l'app non
+> parte affatto (pagina vuota): scegli un device presente in `flutter devices`
+> (es. `edge`). In VS Code usa la configurazione **SmartERP · Edge (dev)** del
+> file `.vscode/launch.json`.
 
 ---
 

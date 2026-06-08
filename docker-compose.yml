@@ -25,7 +25,10 @@ services:
     volumes:
       # 1) Dati permanenti su HDD host (NON si perdono allo spegnimento)
       - smarterp_db_data:/var/lib/postgresql/data
-      # 2) Script di init eseguito SOLO al primo boot (DB vuoto)
+      # 2) Bootstrap completo eseguito al primo boot (DB vuoto).
+      #    L'immagine supabase/postgres standalone non auto-esegue migrate.sh,
+      #    quindi questo script crea ESSO STESSO ruoli/schemi/permessi
+      #    Supabase + schema applicativo. Deve girare PER PRIMO (prefisso 00).
       - ./volumes/db/init/00_init_smarterp.sql:/docker-entrypoint-initdb.d/00_init_smarterp.sql:ro
     healthcheck:
       # Il DB è "healthy" SOLO quando pg_isready risponde realmente

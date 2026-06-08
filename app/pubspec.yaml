@@ -10,6 +10,8 @@ dependencies:
   flutter:
     sdk: flutter
   supabase_flutter: ^2.8.0
+  flutter_riverpod: ^2.6.1  # state management
+  go_router: ^14.6.2        # routing dichiarativo con redirect auth
   pdf: ^3.11.1            # generazione stampe lato client
   printing: ^5.13.3       # anteprima/stampa PDF
   docx_template: ^0.4.0   # template Word brandizzati

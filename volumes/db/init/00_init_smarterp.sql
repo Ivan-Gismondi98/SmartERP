@@ -1,17 +1,168 @@
 -- ============================================================
 --  SMARTERP · 00_init_smarterp.sql
---  Inizializzazione schema multi-tenant + RLS
+--  Bootstrap COMPLETO self-contained per supabase/postgres standalone.
+--
+--  Ordine OBBLIGATORIO:
+--    1) ruoli (PRIMA di tutto, perche' l'image ha un event trigger su
+--       CREATE EXTENSION che cerca supabase_admin)
+--    2) extensions
+--    3) schemi + permessi
+--    4) funzioni auth.* (uid/role/email per RLS)
+--    5) tabelle smarterp
+--    6) RLS + grants + seed
+--
+--  Le FK verso auth.users e il trigger handle_new_user vengono
+--  applicati DOPO che GoTrue ha creato auth.users, tramite il file
+--  volumes/db/post-init/99_smarterp_post_auth.sql (esecuzione manuale).
+--
+--  ATTENZIONE: la password 'qui8Tiv' qui sotto DEVE combaciare con
+--  POSTGRES_PASSWORD del file .env. Se cambi una, cambia l'altra.
 -- ============================================================
 \set ON_ERROR_STOP on
 
--- ------------------------------------------------------------
--- 1) ESTENSIONI
--- ------------------------------------------------------------
-create extension if not exists "uuid-ossp";
+-- ============================================================
+--  SEZIONE 1 — RUOLI SUPABASE  (devono esistere PRIMA delle extension)
+--  Pattern CREATE-or-ALTER: forziamo SEMPRE la password definita qui,
+--  anche se i ruoli sono gia' stati creati dall'image (con un'altra pwd).
+-- ============================================================
 
--- ------------------------------------------------------------
--- 2) TIPI ENUM CUSTOM
--- ------------------------------------------------------------
+do $$
+declare
+  pwd text := 'qui8Tiv';
+begin
+  -- supabase_admin (superuser per migrazioni di sistema)
+  if not exists (select 1 from pg_roles where rolname = 'supabase_admin') then
+    execute format(
+      'create role supabase_admin with login superuser createdb createrole replication bypassrls password %L',
+      pwd
+    );
+  else
+    execute format('alter role supabase_admin with password %L', pwd);
+  end if;
+
+  -- authenticator (usato da PostgREST)
+  if not exists (select 1 from pg_roles where rolname = 'authenticator') then
+    execute format(
+      'create role authenticator with login noinherit password %L',
+      pwd
+    );
+  else
+    execute format('alter role authenticator with password %L', pwd);
+  end if;
+
+  if not exists (select 1 from pg_roles where rolname = 'anon') then
+    create role anon nologin noinherit;
+  end if;
+
+  if not exists (select 1 from pg_roles where rolname = 'authenticated') then
+    create role authenticated nologin noinherit;
+  end if;
+
+  if not exists (select 1 from pg_roles where rolname = 'service_role') then
+    create role service_role nologin noinherit bypassrls;
+  end if;
+
+  -- supabase_auth_admin (usato da GoTrue)
+  if not exists (select 1 from pg_roles where rolname = 'supabase_auth_admin') then
+    execute format(
+      'create role supabase_auth_admin with login createrole noinherit password %L',
+      pwd
+    );
+  else
+    execute format('alter role supabase_auth_admin with password %L', pwd);
+  end if;
+
+  -- supabase_storage_admin (usato da Storage)
+  if not exists (select 1 from pg_roles where rolname = 'supabase_storage_admin') then
+    execute format(
+      'create role supabase_storage_admin with login createrole noinherit password %L',
+      pwd
+    );
+  else
+    execute format('alter role supabase_storage_admin with password %L', pwd);
+  end if;
+
+  -- supabase_realtime_admin (usato da Realtime)
+  if not exists (select 1 from pg_roles where rolname = 'supabase_realtime_admin') then
+    execute format(
+      'create role supabase_realtime_admin with login replication noinherit password %L',
+      pwd
+    );
+  else
+    execute format('alter role supabase_realtime_admin with password %L', pwd);
+  end if;
+end
+$$;
+
+grant anon, authenticated, service_role to authenticator;
+grant anon, authenticated, service_role to postgres;
+grant anon, authenticated, service_role to supabase_admin;
+
+-- ============================================================
+--  SEZIONE 2 — EXTENSIONS  (ora supabase_admin esiste, event trigger ok)
+-- ============================================================
+
+create extension if not exists "uuid-ossp";
+create extension if not exists "pgcrypto";
+
+-- ============================================================
+--  SEZIONE 3 — SCHEMI E PERMESSI
+-- ============================================================
+
+create schema if not exists auth       authorization supabase_auth_admin;
+create schema if not exists storage    authorization supabase_storage_admin;
+create schema if not exists _realtime  authorization supabase_realtime_admin;
+create schema if not exists extensions authorization postgres;
+
+grant usage on schema public to anon, authenticated, service_role;
+grant all   on schema public to postgres, supabase_admin;
+
+grant usage, create on schema auth      to supabase_auth_admin;
+grant usage, create on schema storage   to supabase_storage_admin;
+grant usage, create on schema _realtime to supabase_realtime_admin;
+
+alter user supabase_auth_admin     set search_path = 'auth';
+alter user supabase_storage_admin  set search_path = 'storage';
+alter user supabase_realtime_admin set search_path = '_realtime';
+
+-- supabase_auth_admin deve poter creare tabelle nel DB postgres
+grant create on database postgres to supabase_auth_admin;
+grant create on database postgres to supabase_storage_admin;
+
+-- ============================================================
+--  SEZIONE 4 — FUNZIONI AUTH.* (usate dalla RLS, sempre disponibili)
+-- ============================================================
+
+create or replace function auth.uid()
+returns uuid language sql stable as $$
+  select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid;
+$$;
+
+create or replace function auth.role()
+returns text language sql stable as $$
+  select nullif(current_setting('request.jwt.claim.role', true), '');
+$$;
+
+create or replace function auth.email()
+returns text language sql stable as $$
+  select nullif(current_setting('request.jwt.claim.email', true), '');
+$$;
+
+-- L'OWNER deve essere supabase_auth_admin: altrimenti GoTrue al primo
+-- avvio fallirebbe il CREATE OR REPLACE di queste stesse funzioni con
+-- "ERROR: must be owner of function uid (SQLSTATE 42501)".
+alter function auth.uid()   owner to supabase_auth_admin;
+alter function auth.role()  owner to supabase_auth_admin;
+alter function auth.email() owner to supabase_auth_admin;
+
+grant execute on function auth.uid()   to anon, authenticated, service_role;
+grant execute on function auth.role()  to anon, authenticated, service_role;
+grant execute on function auth.email() to anon, authenticated, service_role;
+
+-- ============================================================
+--  SEZIONE 5 — TIPI ENUM APPLICATIVI
+-- ============================================================
+
 do $$ begin
   create type public.user_role as enum ('super_admin', 'admin', 'employee', 'customer');
 exception when duplicate_object then null; end $$;
@@ -20,11 +171,12 @@ do $$ begin
   create type public.invoice_status as enum ('draft', 'sent', 'paid', 'overdue', 'cancelled');
 exception when duplicate_object then null; end $$;
 
--- ------------------------------------------------------------
--- 3) TABELLE
--- ------------------------------------------------------------
+-- ============================================================
+--  SEZIONE 6 — TABELLE APPLICATIVE SMARTERP
+--  Nota: profiles.id NON ha FK verso auth.users qui.
+--  La FK + il trigger handle_new_user sono nel post-init script.
+-- ============================================================
 
--- 3.1 Aziende (tenant). theme_settings JSONB = brand/colori per le stampe.
 create table if not exists public.companies (
   id             uuid primary key default uuid_generate_v4(),
   name           text not null,
@@ -38,9 +190,8 @@ create table if not exists public.companies (
   updated_at     timestamptz not null default now()
 );
 
--- 3.2 Profili (1:1 con auth.users di Supabase)
 create table if not exists public.profiles (
-  id          uuid primary key references auth.users(id) on delete cascade,
+  id          uuid primary key,
   company_id  uuid references public.companies(id) on delete set null,
   full_name   text,
   role        public.user_role not null default 'customer',
@@ -52,7 +203,6 @@ create table if not exists public.profiles (
 );
 create index if not exists idx_profiles_company on public.profiles(company_id);
 
--- 3.3 Fornitori
 create table if not exists public.suppliers (
   id          uuid primary key default uuid_generate_v4(),
   company_id  uuid not null references public.companies(id) on delete cascade,
@@ -65,7 +215,6 @@ create table if not exists public.suppliers (
 );
 create index if not exists idx_suppliers_company on public.suppliers(company_id);
 
--- 3.4 Prodotti (catalogo)
 create table if not exists public.products (
   id           uuid primary key default uuid_generate_v4(),
   company_id   uuid not null references public.companies(id) on delete cascade,
@@ -81,7 +230,6 @@ create table if not exists public.products (
 );
 create index if not exists idx_products_company on public.products(company_id);
 
--- 3.5 Magazzino (giacenze)
 create table if not exists public.inventory (
   id                 uuid primary key default uuid_generate_v4(),
   company_id         uuid not null references public.companies(id) on delete cascade,
@@ -94,7 +242,6 @@ create table if not exists public.inventory (
 );
 create index if not exists idx_inventory_company on public.inventory(company_id);
 
--- 3.6 Fatture (testata)
 create table if not exists public.invoices (
   id             uuid primary key default uuid_generate_v4(),
   company_id     uuid not null references public.companies(id) on delete cascade,
@@ -115,7 +262,6 @@ create table if not exists public.invoices (
 create index if not exists idx_invoices_company on public.invoices(company_id);
 create index if not exists idx_invoices_status  on public.invoices(status);
 
--- 3.7 Righe fattura
 create table if not exists public.invoice_items (
   id          uuid primary key default uuid_generate_v4(),
   invoice_id  uuid not null references public.invoices(id) on delete cascade,
@@ -128,7 +274,6 @@ create table if not exists public.invoice_items (
 );
 create index if not exists idx_invoice_items_invoice on public.invoice_items(invoice_id);
 
--- 3.8 Chat: stanze
 create table if not exists public.chat_rooms (
   id          uuid primary key default uuid_generate_v4(),
   company_id  uuid not null references public.companies(id) on delete cascade,
@@ -139,7 +284,6 @@ create table if not exists public.chat_rooms (
 );
 create index if not exists idx_chat_rooms_company on public.chat_rooms(company_id);
 
--- 3.9 Chat: partecipanti
 create table if not exists public.chat_participants (
   id          uuid primary key default uuid_generate_v4(),
   room_id     uuid not null references public.chat_rooms(id) on delete cascade,
@@ -148,7 +292,6 @@ create table if not exists public.chat_participants (
   unique (room_id, profile_id)
 );
 
--- 3.10 Chat: messaggi
 create table if not exists public.chat_messages (
   id             uuid primary key default uuid_generate_v4(),
   room_id        uuid not null references public.chat_rooms(id) on delete cascade,
@@ -159,24 +302,24 @@ create table if not exists public.chat_messages (
 );
 create index if not exists idx_chat_messages_room on public.chat_messages(room_id, created_at);
 
--- ------------------------------------------------------------
--- 4) FUNZIONI DI SUPPORTO (SECURITY DEFINER -> niente ricorsione RLS)
--- ------------------------------------------------------------
+-- ============================================================
+--  SEZIONE 7 — FUNZIONI HELPER E TRIGGER updated_at
+-- ============================================================
+
 create or replace function public.auth_company_id()
 returns uuid
-language sql stable security definer set search_path = public, auth
+language sql stable security definer set search_path = public
 as $$
   select company_id from public.profiles where id = auth.uid();
 $$;
 
 create or replace function public.auth_role()
 returns public.user_role
-language sql stable security definer set search_path = public, auth
+language sql stable security definer set search_path = public
 as $$
   select role from public.profiles where id = auth.uid();
 $$;
 
--- updated_at automatico
 create or replace function public.set_updated_at()
 returns trigger language plpgsql as $$
 begin
@@ -184,20 +327,6 @@ begin
   return new;
 end; $$;
 
--- Crea automaticamente un profilo all'iscrizione di un utente auth
-create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer set search_path = public, auth
-as $$
-begin
-  insert into public.profiles (id, full_name, role)
-  values (new.id, coalesce(new.raw_user_meta_data->>'full_name', new.email), 'customer')
-  on conflict (id) do nothing;
-  return new;
-end; $$;
-
--- ------------------------------------------------------------
--- 5) TRIGGER
--- ------------------------------------------------------------
 drop trigger if exists trg_companies_updated on public.companies;
 create trigger trg_companies_updated before update on public.companies
   for each row execute function public.set_updated_at();
@@ -214,20 +343,13 @@ drop trigger if exists trg_inventory_updated on public.inventory;
 create trigger trg_inventory_updated before update on public.inventory
   for each row execute function public.set_updated_at();
 
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created after insert on auth.users
-  for each row execute function public.handle_new_user();
+-- ============================================================
+--  SEZIONE 8 — RLS su invoices
+-- ============================================================
 
--- ------------------------------------------------------------
--- 6) ROW LEVEL SECURITY sulla tabella INVOICES
---    - super_admin (sviluppatore): bypass totale globale
---    - admin / employee: SOLO righe del proprio company_id
---    Nota: il ruolo service_role bypassa nativamente la RLS.
--- ------------------------------------------------------------
 alter table public.invoices enable row level security;
 alter table public.invoices force row level security;
 
--- 6.1 super_admin -> controllo globale completo
 drop policy if exists invoices_super_admin_all on public.invoices;
 create policy invoices_super_admin_all
   on public.invoices
@@ -236,7 +358,6 @@ create policy invoices_super_admin_all
   using      (public.auth_role() = 'super_admin')
   with check (public.auth_role() = 'super_admin');
 
--- 6.2 admin / employee -> isolamento sul proprio company_id
 drop policy if exists invoices_company_isolation on public.invoices;
 create policy invoices_company_isolation
   on public.invoices
@@ -251,9 +372,10 @@ create policy invoices_company_isolation
     and company_id = public.auth_company_id()
   );
 
--- ------------------------------------------------------------
--- 7) GRANT (PostgREST usa i ruoli anon/authenticated; la RLS resta il gate)
--- ------------------------------------------------------------
+-- ============================================================
+--  SEZIONE 9 — GRANTS su tabelle e default privileges
+-- ============================================================
+
 grant usage on schema public to anon, authenticated, service_role;
 grant all on all tables    in schema public to anon, authenticated, service_role;
 grant all on all sequences in schema public to anon, authenticated, service_role;
@@ -261,19 +383,10 @@ grant all on all functions in schema public to anon, authenticated, service_role
 alter default privileges in schema public grant all on tables    to anon, authenticated, service_role;
 alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
 
--- ------------------------------------------------------------
--- 8) REALTIME — pubblica chat e fatture sul canale WebSocket
--- ------------------------------------------------------------
-do $$ begin
-  if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
-    alter publication supabase_realtime add table public.chat_messages;
-    alter publication supabase_realtime add table public.invoices;
-  end if;
-exception when duplicate_object then null; end $$;
+-- ============================================================
+--  SEZIONE 10 — SEED azienda demo
+-- ============================================================
 
--- ------------------------------------------------------------
--- 9) SEED minimo (azienda demo con tema brand)
--- ------------------------------------------------------------
 insert into public.companies (id, name, vat_number, email, theme_settings)
 values (
   '00000000-0000-0000-0000-000000000001',
