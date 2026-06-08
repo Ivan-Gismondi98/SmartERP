@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
 import '../../profile/application/profile_providers.dart';
+import '../../profile/domain/profile.dart';
 import '../application/chat_providers.dart';
 import '../data/chat_repository.dart';
 import 'chat_room_page.dart';
@@ -17,6 +18,9 @@ class ChatRoomsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final canManage = ref.watch(canProvider(Perm.chatManage));
+    final role = ref.watch(currentProfileProvider).valueOrNull?.role;
+    final canDelete =
+        role == UserRole.admin || role == UserRole.superAdmin;
     final roomsAsync = ref.watch(chatRoomsProvider);
 
     return Scaffold(
@@ -45,7 +49,13 @@ class ChatRoomsPage extends ConsumerWidget {
                 return ListTile(
                   leading: const CircleAvatar(child: Icon(Icons.forum_outlined)),
                   title: Text(r.displayName),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: canDelete
+                      ? IconButton(
+                          icon: const Icon(Icons.delete_outline),
+                          tooltip: 'Elimina stanza',
+                          onPressed: () => _deleteRoom(context, ref, r),
+                        )
+                      : const Icon(Icons.chevron_right),
                   onTap: () => Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => ChatRoomPage(room: r))),
                 );
@@ -55,6 +65,34 @@ class ChatRoomsPage extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  Future<void> _deleteRoom(BuildContext context, WidgetRef ref, room) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Eliminare la stanza?'),
+        content: Text('"${room.displayName}" e i suoi messaggi verranno eliminati.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Annulla')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Elimina')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await ref.read(chatRepositoryProvider).deleteRoom(room.id);
+      ref.invalidate(chatRoomsProvider);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Errore: $e')));
+      }
+    }
   }
 
   Future<void> _createRoom(BuildContext context, WidgetRef ref) async {

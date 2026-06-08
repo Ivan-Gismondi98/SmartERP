@@ -25,6 +25,11 @@ class Perm {
   static const productsEdit = 'products.edit';
   static const productsDelete = 'products.delete';
 
+  static const suppliersView = 'suppliers.view';
+  static const suppliersCreate = 'suppliers.create';
+  static const suppliersEdit = 'suppliers.edit';
+  static const suppliersDelete = 'suppliers.delete';
+
   static const chatView = 'chat.view';
   static const chatSend = 'chat.send';
   static const chatManage = 'chat.manage';

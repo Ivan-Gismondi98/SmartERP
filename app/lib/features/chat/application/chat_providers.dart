@@ -23,8 +23,8 @@ final profileNamesProvider = FutureProvider<Map<String, String>>((ref) async {
   return ref.watch(chatRepositoryProvider).profileNames(companyId);
 });
 
-/// Stream realtime dei messaggi di una stanza.
-final messagesStreamProvider =
-    StreamProvider.family<List<ChatMessage>, String>((ref, roomId) {
-  return ref.watch(chatRepositoryProvider).messagesStream(roomId);
+/// Messaggi di una stanza (fetch REST, robusto anche senza WebSocket).
+final messagesFutureProvider =
+    FutureProvider.family<List<ChatMessage>, String>((ref, roomId) {
+  return ref.watch(chatRepositoryProvider).messages(roomId);
 });

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/theme.dart';
 import 'features/assistant/presentation/assistant_bar.dart';
+import 'features/profile/application/profile_providers.dart';
 import 'features/diagnostics/presentation/connection_check_page.dart';
 import 'routing/app_router.dart';
 
@@ -22,23 +23,28 @@ class SmartErpApp extends ConsumerWidget {
       return MaterialApp(
         title: 'SmartERP',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
+        theme: AppTheme.light(),
         home: ConnectionCheckPage(initError: initError),
       );
     }
 
     final router = ref.watch(routerProvider);
+    // Colore primario dell'organizzazione (deciso dall'admin): tutti gli
+    // utenti dell'azienda vedono il branding scelto.
+    final company = ref.watch(currentProfileProvider).valueOrNull?.company;
+    final seed = AppTheme.hexToColor(company?.brandPrimaryHex);
     return MaterialApp.router(
       title: 'SmartERP',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
+      theme: AppTheme.light(seed),
+      darkTheme: AppTheme.dark(seed),
       routerConfig: router,
-      // L'Assistente IA compare in fondo a OGNI pagina (se la licenza è attiva).
-      builder: (context, child) => Column(
+      // L'Assistente IA: icona tonda ancorata a destra, quasi in fondo,
+      // sopra OGNI pagina (se la licenza è attiva).
+      builder: (context, child) => Stack(
         children: [
-          Expanded(child: child ?? const SizedBox.shrink()),
-          const AssistantBar(),
+          Positioned.fill(child: child ?? const SizedBox.shrink()),
+          const Positioned(right: 16, bottom: 96, child: AssistantBar()),
         ],
       ),
     );

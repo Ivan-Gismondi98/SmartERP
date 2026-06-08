@@ -45,7 +45,8 @@ const _modules = <_Module>[
       route: '/products', requiredPermission: Perm.productsView, app: 'products'),
   _Module('Prodotti', Icons.sell_outlined,
       route: '/products', requiredPermission: Perm.productsView, app: 'products'),
-  _Module('Fornitori', Icons.local_shipping_outlined),
+  _Module('Fornitori', Icons.local_shipping_outlined,
+      route: '/suppliers', requiredPermission: Perm.suppliersView),
   _Module('Chat', Icons.chat_bubble_outline,
       route: '/chat', requiredPermission: Perm.chatView, app: 'chat'),
   _Module('Studio', Icons.dashboard_customize_outlined,
@@ -60,6 +61,8 @@ const _modules = <_Module>[
       route: '/users', requiredPermission: Perm.orgUsersManage),
   _Module('Organizzazioni', Icons.apartment_outlined,
       route: '/orgs', requiredPermission: Perm.companiesManage),
+  _Module('Supporto', Icons.support_agent_outlined,
+      route: '/support', staffOnly: false),
   _Module('Impostazioni', Icons.settings_outlined,
       route: '/settings', staffOnly: false),
 ];

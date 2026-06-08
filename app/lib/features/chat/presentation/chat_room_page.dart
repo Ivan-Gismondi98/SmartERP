@@ -47,6 +47,7 @@ class _ChatRoomPageState extends ConsumerState<ChatRoomPage> {
           .read(chatRepositoryProvider)
           .sendMessage(widget.room.id, profile.id, text);
       if (overrideText == null) _input.clear();
+      ref.invalidate(messagesFutureProvider(widget.room.id));
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -79,7 +80,7 @@ class _ChatRoomPageState extends ConsumerState<ChatRoomPage> {
         ref.watch(boolSettingProvider((scope: 'chat', key: 'video_enabled')))
                 .valueOrNull ??
             false;
-    final messagesAsync = ref.watch(messagesStreamProvider(widget.room.id));
+    final messagesAsync = ref.watch(messagesFutureProvider(widget.room.id));
     final names = ref.watch(profileNamesProvider).valueOrNull ?? const {};
     final myId = ref.watch(currentProfileProvider).valueOrNull?.id;
 
@@ -87,6 +88,12 @@ class _ChatRoomPageState extends ConsumerState<ChatRoomPage> {
       appBar: AppBar(
         title: Text(widget.room.displayName),
         actions: [
+          IconButton(
+            tooltip: 'Aggiorna',
+            icon: const Icon(Icons.refresh),
+            onPressed: () =>
+                ref.invalidate(messagesFutureProvider(widget.room.id)),
+          ),
           if (videoEnabled && canVideo)
             IconButton(
               tooltip: 'Videochiamata',

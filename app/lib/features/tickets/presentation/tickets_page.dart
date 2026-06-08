@@ -21,7 +21,7 @@ class TicketsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(ticketsStreamProvider);
+    final async = ref.watch(ticketsFutureProvider);
     final role = ref.watch(currentProfileProvider).valueOrNull?.role;
     final canManage = role == UserRole.admin || role == UserRole.superAdmin;
 
@@ -29,6 +29,11 @@ class TicketsPage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Segnalazioni / Ticket'),
         actions: [
+          IconButton(
+            tooltip: 'Aggiorna',
+            icon: const Icon(Icons.refresh),
+            onPressed: () => ref.invalidate(ticketsFutureProvider),
+          ),
           if (canManage)
             IconButton(
               tooltip: 'Esporta Excel',
@@ -56,7 +61,7 @@ class TicketsPage extends ConsumerWidget {
   }
 
   Future<void> _exportExcel(BuildContext context, WidgetRef ref) async {
-    final tickets = ref.read(ticketsStreamProvider).valueOrNull ?? const [];
+    final tickets = ref.read(ticketsFutureProvider).valueOrNull ?? const [];
     final df = DateFormat('dd/MM/yyyy HH:mm');
     final rows = tickets
         .map((t) => [

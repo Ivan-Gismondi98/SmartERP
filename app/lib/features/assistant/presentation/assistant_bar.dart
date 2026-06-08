@@ -5,9 +5,9 @@
 // ============================================================
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/licensing.dart';
+import '../../../routing/app_router.dart';
 import '../../profile/application/profile_providers.dart';
 import '../application/assistant_controller.dart';
 
@@ -23,38 +23,37 @@ class AssistantBar extends ConsumerWidget {
       return const SizedBox.shrink();
     }
     final theme = Theme.of(context);
-    return Material(
-      color: theme.colorScheme.primaryContainer,
-      child: InkWell(
-        onTap: () => _open(context),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(
-              children: [
-                Icon(Icons.smart_toy_outlined,
-                    color: theme.colorScheme.onPrimaryContainer),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text('Assistente IA — chiedimi come usare l\'app',
-                      style: TextStyle(
-                          color: theme.colorScheme.onPrimaryContainer)),
-                ),
-                Icon(Icons.keyboard_arrow_up,
-                    color: theme.colorScheme.onPrimaryContainer),
-              ],
-            ),
+    // NB: questo widget vive nel builder di MaterialApp.router, SOPRA il
+    // Navigator/Overlay: niente Tooltip qui (richiederebbe un Overlay) e il
+    // pannello si apre usando il contesto del Navigator del router.
+    return Semantics(
+      label: 'Assistente IA',
+      button: true,
+      child: Material(
+        color: theme.colorScheme.primaryContainer,
+        shape: const CircleBorder(),
+        elevation: 4,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => _open(ref),
+          child: SizedBox(
+            width: 56,
+            height: 56,
+            child: Icon(Icons.smart_toy_outlined,
+                color: theme.colorScheme.onPrimaryContainer),
           ),
         ),
       ),
     );
   }
 
-  void _open(BuildContext context) {
-    final path = GoRouter.of(context).routeInformationProvider.value.uri.path;
+  void _open(WidgetRef ref) {
+    final router = ref.read(routerProvider);
+    final path = router.routeInformationProvider.value.uri.path;
+    final navContext = router.routerDelegate.navigatorKey.currentContext;
+    if (navContext == null) return;
     showModalBottomSheet(
-      context: context,
+      context: navContext,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (_) => _AssistantPanel(currentPath: path),

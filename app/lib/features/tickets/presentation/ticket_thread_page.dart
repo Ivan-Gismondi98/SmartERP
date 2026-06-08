@@ -13,8 +13,8 @@ import '../data/tickets_repository.dart';
 import '../domain/ticket.dart';
 
 final _messagesProvider =
-    StreamProvider.family<List<TicketMessage>, String>((ref, ticketId) {
-  return ref.watch(ticketsRepositoryProvider).messagesStream(ticketId);
+    FutureProvider.family<List<TicketMessage>, String>((ref, ticketId) {
+  return ref.watch(ticketsRepositoryProvider).messages(ticketId);
 });
 
 class TicketThreadPage extends ConsumerStatefulWidget {
@@ -46,6 +46,7 @@ class _TicketThreadPageState extends ConsumerState<TicketThreadPage> {
     try {
       await ref.read(ticketsRepositoryProvider).sendMessage(_ticketId, text);
       _input.clear();
+      ref.invalidate(_messagesProvider(_ticketId));
     } catch (e) {
       _snack('Errore invio: $e');
     } finally {
@@ -68,6 +69,7 @@ class _TicketThreadPageState extends ConsumerState<TicketThreadPage> {
           _ticketId, f.bytes!, f.name, DateTime.now().millisecondsSinceEpoch);
       await repo.sendMessage(_ticketId, null,
           attachmentUrl: url, attachmentName: f.name);
+      ref.invalidate(_messagesProvider(_ticketId));
     } catch (e) {
       _snack('Errore allegato: $e');
     } finally {
@@ -89,6 +91,13 @@ class _TicketThreadPageState extends ConsumerState<TicketThreadPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.ticket.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        actions: [
+          IconButton(
+            tooltip: 'Aggiorna',
+            icon: const Icon(Icons.refresh),
+            onPressed: () => ref.invalidate(_messagesProvider(_ticketId)),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(20),
           child: Padding(

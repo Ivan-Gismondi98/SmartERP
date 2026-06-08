@@ -39,6 +39,19 @@ class ChatRepository {
     return room;
   }
 
+  Future<void> deleteRoom(String roomId) async {
+    await _client.from('chat_rooms').delete().eq('id', roomId);
+  }
+
+  Future<List<ChatMessage>> messages(String roomId) async {
+    final rows = await _client
+        .from('chat_messages')
+        .select()
+        .eq('room_id', roomId)
+        .order('created_at');
+    return rows.map(ChatMessage.fromJson).toList();
+  }
+
   /// Stream realtime dei messaggi di una stanza (ordine cronologico).
   Stream<List<ChatMessage>> messagesStream(String roomId) {
     return _client

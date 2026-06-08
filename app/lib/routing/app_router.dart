@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/supabase_providers.dart';
 import '../features/auth/application/auth_providers.dart';
 import '../features/auth/presentation/login_page.dart';
 import '../features/chat/presentation/chat_rooms_page.dart';
@@ -24,6 +25,8 @@ import '../features/products/presentation/products_page.dart';
 import '../features/settings/presentation/permissions_settings_page.dart';
 import '../features/settings/presentation/settings_page.dart';
 import '../features/studio/presentation/studio_page.dart';
+import '../features/suppliers/presentation/suppliers_page.dart';
+import '../features/support/presentation/support_page.dart';
 import '../features/tickets/presentation/tickets_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -35,7 +38,9 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     refreshListenable: refresh,
     redirect: (context, state) {
-      final loggedIn = ref.read(isAuthenticatedProvider);
+      // Verità immediata sulla sessione (aggiornata subito dopo signOut).
+      final loggedIn =
+          ref.read(supabaseClientProvider).auth.currentSession != null;
       final goingToLogin = state.matchedLocation == '/login';
 
       if (!loggedIn) {
@@ -58,6 +63,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/errors', builder: (_, __) => const ErrorLogsPage()),
       GoRoute(path: '/dev', builder: (_, __) => const DevDashboardPage()),
       GoRoute(path: '/tickets', builder: (_, __) => const TicketsPage()),
+      GoRoute(path: '/suppliers', builder: (_, __) => const SuppliersPage()),
+      GoRoute(path: '/support', builder: (_, __) => const SupportPage()),
       GoRoute(path: '/users', builder: (_, __) => const UsersPage()),
       GoRoute(path: '/orgs', builder: (_, __) => const OrganizationsPage()),
       GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()),

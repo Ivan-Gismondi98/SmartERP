@@ -61,6 +61,15 @@ class TicketsRepository {
 
   // ----- Thread messaggi + allegati -----
 
+  Future<List<TicketMessage>> messages(String ticketId) async {
+    final rows = await _client
+        .from('ticket_messages')
+        .select('id, ticket_id, sender_id, content, attachment_url, attachment_name, created_at')
+        .eq('ticket_id', ticketId)
+        .order('created_at');
+    return rows.map(TicketMessage.fromJson).toList();
+  }
+
   Stream<List<TicketMessage>> messagesStream(String ticketId) {
     return _client
         .from('ticket_messages')
@@ -99,13 +108,13 @@ final ticketsRepositoryProvider = Provider<TicketsRepository>((ref) {
   return TicketsRepository(ref.watch(supabaseClientProvider));
 });
 
-/// Stream realtime (per notifiche live + lista che si aggiorna da sola).
-final ticketsStreamProvider = StreamProvider<List<Ticket>>((ref) {
-  return ref.watch(ticketsRepositoryProvider).stream();
+/// Lista ticket (fetch REST, robusta anche senza WebSocket Realtime).
+final ticketsFutureProvider = FutureProvider<List<Ticket>>((ref) {
+  return ref.watch(ticketsRepositoryProvider).list();
 });
 
 /// Conteggio ticket "aperti" rilevanti, per il badge di notifica.
 final openTicketsCountProvider = Provider<int>((ref) {
-  final tickets = ref.watch(ticketsStreamProvider).valueOrNull ?? const [];
+  final tickets = ref.watch(ticketsFutureProvider).valueOrNull ?? const [];
   return tickets.where((t) => t.status == 'open').length;
 });

@@ -26,7 +26,7 @@ enum UserRole {
   String get label {
     switch (this) {
       case UserRole.superAdmin:
-        return 'Super Admin';
+        return 'Sviluppatore';
       case UserRole.admin:
         return 'Amministratore';
       case UserRole.employee:

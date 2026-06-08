@@ -8,21 +8,31 @@ class AppTheme {
 
   static const Color seed = Color(0xFF0D47A1);
 
-  static ThemeData get light => ThemeData(
+  static ThemeData light([Color? brandSeed]) => ThemeData(
         useMaterial3: true,
-        colorSchemeSeed: seed,
+        colorSchemeSeed: brandSeed ?? seed,
         brightness: Brightness.light,
         inputDecorationTheme: const InputDecorationTheme(
           border: OutlineInputBorder(),
         ),
       );
 
-  static ThemeData get dark => ThemeData(
+  static ThemeData dark([Color? brandSeed]) => ThemeData(
         useMaterial3: true,
-        colorSchemeSeed: seed,
+        colorSchemeSeed: brandSeed ?? seed,
         brightness: Brightness.dark,
         inputDecorationTheme: const InputDecorationTheme(
           border: OutlineInputBorder(),
         ),
       );
+
+  /// Converte "#RRGGBB" in Color (null se non valido).
+  static Color? hexToColor(String? hex) {
+    if (hex == null) return null;
+    var h = hex.trim().replaceAll('#', '');
+    if (h.length == 6) h = 'FF$h';
+    if (h.length != 8) return null;
+    final v = int.tryParse(h, radix: 16);
+    return v == null ? null : Color(v);
+  }
 }
