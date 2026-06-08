@@ -14,6 +14,7 @@ import '../../profile/application/profile_providers.dart';
 import '../../profile/domain/profile.dart';
 import '../data/tickets_repository.dart';
 import '../domain/ticket.dart';
+import 'ticket_thread_page.dart';
 
 class TicketsPage extends ConsumerWidget {
   const TicketsPage({super.key});
@@ -130,6 +131,15 @@ class _TicketTile extends ConsumerWidget {
             child: Text(ticket.description!),
           ),
         const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => TicketThreadPage(ticket: ticket))),
+            icon: const Icon(Icons.forum_outlined),
+            label: const Text('Conversazione'),
+          ),
+        ),
         if (canManage)
           Row(
             children: [

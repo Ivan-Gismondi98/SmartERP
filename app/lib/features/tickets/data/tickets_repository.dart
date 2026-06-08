@@ -1,6 +1,8 @@
 // ============================================================
 //  SMARTERP · tickets_repository.dart — segnalazioni/ticket + realtime.
 // ============================================================
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -55,6 +57,41 @@ class TicketsRepository {
 
   Future<void> setStatus(String id, String status) async {
     await _client.from('tickets').update({'status': status}).eq('id', id);
+  }
+
+  // ----- Thread messaggi + allegati -----
+
+  Stream<List<TicketMessage>> messagesStream(String ticketId) {
+    return _client
+        .from('ticket_messages')
+        .stream(primaryKey: ['id'])
+        .eq('ticket_id', ticketId)
+        .order('created_at')
+        .map((rows) => rows.map(TicketMessage.fromJson).toList());
+  }
+
+  Future<void> sendMessage(String ticketId, String? content,
+      {String? attachmentUrl, String? attachmentName}) async {
+    await _client.from('ticket_messages').insert({
+      'ticket_id': ticketId,
+      'sender_id': _client.auth.currentUser?.id,
+      'content': (content == null || content.trim().isEmpty) ? null : content.trim(),
+      'attachment_url': attachmentUrl,
+      'attachment_name': attachmentName,
+    });
+  }
+
+  /// Carica un allegato nel bucket e ritorna l'URL pubblico.
+  Future<String> uploadAttachment(
+      String ticketId, List<int> bytes, String fileName, int stamp) async {
+    final safe = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+    final path = 'tickets/$ticketId/${stamp}_$safe';
+    await _client.storage.from('ticket-attachments').uploadBinary(
+          path,
+          Uint8List.fromList(bytes),
+          fileOptions: const FileOptions(upsert: true),
+        );
+    return _client.storage.from('ticket-attachments').getPublicUrl(path);
   }
 }
 

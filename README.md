@@ -285,7 +285,11 @@ reale (firmandole con il tuo `JWT_SECRET`) e aggiorna di conseguenza
       con **stato di avanzamento** (aperto/in lavorazione/risolto/chiuso) e
       **export Excel (.xlsx)** delle segnalazioni. RLS: employee i propri,
       admin la propria org, super_admin tutto. Gated `tickets.view`.
-      Resta (STEP 15b): chat/thread sul ticket con **allegati**.
+- [x] **Chat/thread sul ticket con allegati (STEP 15b)**: ogni ticket ha un
+      **thread di messaggi realtime** (admin↔sviluppatore) con **allegati
+      immagini/file** su **Supabase Storage** (bucket `ticket-attachments`,
+      upload via `file_picker`, anteprima immagini in-app). RLS: visibile a chi
+      vede il ticket.
 
 ### DevOps
 - [ ] Reverse proxy HTTPS (Caddy/Traefik) + certificati per la produzione.

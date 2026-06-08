@@ -43,6 +43,45 @@ class Ticket {
       );
 }
 
+class TicketMessage {
+  const TicketMessage({
+    required this.id,
+    required this.ticketId,
+    required this.senderId,
+    this.content,
+    this.attachmentUrl,
+    this.attachmentName,
+    required this.createdAt,
+  });
+
+  final String id;
+  final String ticketId;
+  final String senderId;
+  final String? content;
+  final String? attachmentUrl;
+  final String? attachmentName;
+  final DateTime createdAt;
+
+  bool get isImage {
+    final n = (attachmentName ?? attachmentUrl ?? '').toLowerCase();
+    return n.endsWith('.png') ||
+        n.endsWith('.jpg') ||
+        n.endsWith('.jpeg') ||
+        n.endsWith('.gif') ||
+        n.endsWith('.webp');
+  }
+
+  factory TicketMessage.fromJson(Map<String, dynamic> j) => TicketMessage(
+        id: j['id'] as String,
+        ticketId: j['ticket_id'] as String,
+        senderId: j['sender_id'] as String,
+        content: j['content'] as String?,
+        attachmentUrl: j['attachment_url'] as String?,
+        attachmentName: j['attachment_name'] as String?,
+        createdAt: DateTime.parse(j['created_at'] as String),
+      );
+}
+
 const kTicketStatuses = <String, String>{
   'open': 'Aperto',
   'in_progress': 'In lavorazione',
