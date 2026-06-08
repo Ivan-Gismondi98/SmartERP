@@ -31,6 +31,7 @@ class InvoiceItem {
   InvoiceItem({
     this.id,
     this.position = 0,
+    this.productId,
     this.description = '',
     this.quantity = 1,
     this.unitPrice = 0,
@@ -41,6 +42,7 @@ class InvoiceItem {
 
   final String? id;
   int position;
+  String? productId;
   String description;
   double quantity;
   double unitPrice;
@@ -55,6 +57,7 @@ class InvoiceItem {
   factory InvoiceItem.fromJson(Map<String, dynamic> j) => InvoiceItem(
         id: j['id'] as String?,
         position: (j['position'] as num?)?.toInt() ?? 0,
+        productId: j['product_id'] as String?,
         description: (j['description'] as String?) ?? '',
         quantity: (j['quantity'] as num?)?.toDouble() ?? 1,
         unitPrice: (j['unit_price'] as num?)?.toDouble() ?? 0,
@@ -65,6 +68,7 @@ class InvoiceItem {
 
   Map<String, dynamic> toJson() => {
         'position': position,
+        'product_id': productId,
         'description': description,
         'quantity': quantity,
         'unit_price': unitPrice,
@@ -77,6 +81,7 @@ class InvoiceItem {
   InvoiceItem copy() => InvoiceItem(
         id: id,
         position: position,
+        productId: productId,
         description: description,
         quantity: quantity,
         unitPrice: unitPrice,

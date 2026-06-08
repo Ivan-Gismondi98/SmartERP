@@ -34,8 +34,9 @@ class InvoicesRepository {
   Future<Invoice> getById(String id) async {
     final row = await _client
         .from('invoices')
-        .select('$_invoiceSelect, invoice_items ( id, position, description, '
-            'quantity, unit_price, vat_rate, vat_nature, discount_percent, line_total )')
+        .select('$_invoiceSelect, invoice_items ( id, position, product_id, '
+            'description, quantity, unit_price, vat_rate, vat_nature, '
+            'discount_percent, line_total )')
         .eq('id', id)
         .single();
     return Invoice.fromJson(row);

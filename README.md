@@ -196,10 +196,20 @@ reale (firmandole con il tuo `JWT_SECRET`) e aggiorna di conseguenza
 - [ ] **Motore di stampa client-side**: usare i pacchetti `pdf` + `printing`
       per i PDF e `docx_template` per i documenti Word, iniettando i colori e
       il logo presi da `companies.theme_settings` (branding per-tenant).
-- [ ] **Scarico magazzino alla vendita**: alla conferma di una fattura,
-      decrementare `inventory.quantity` per ogni `invoice_item`
-      (idealmente in una transazione/funzione RPC PostgreSQL per atomicita') e
-      gestire l'alert sotto `reorder_level`.
+- [x] **Magazzino/Prodotti (STEP 5)**: CRUD prodotti con **giacenze**
+      (`inventory`), badge giacenza + evidenza **sotto scorta**, ricerca e
+      filtro, RLS company-isolation. Riga fattura collegabile a un prodotto e
+      **scarico automatico atomico** della giacenza all'emissione (le note di
+      credito **reintegrano**), con guard anti-doppia emissione. Gated da
+      `products.*`.
+      Restano: alert/notifica push sotto `reorder_level` e ordini di riordino.
+- [x] **Distinta base / Prodotti componibili (STEP 5b)**: un prodotto può
+      essere **componibile** con una **distinta base** (`bom_components`:
+      componente + quantità). Azione **Produci N** (RPC `produce_product`
+      atomica): consuma i componenti dal magazzino e incrementa il finito,
+      con verifica disponibilità (errore se un componente è insufficiente).
+      Es.: 500 travi → produci 10 sedie (4 travi/cad) → travi 460, sedie 10.
+      Gated da `products.produce`.
 - [x] **Gestione sessione/auth**: login/registrazione (GoTrue), refresh token
       automatico, routing protetto con redirect (`go_router`). Utente demo:
       `admin@smarterp.local` / `Demo1234`.

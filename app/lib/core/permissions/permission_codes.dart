@@ -19,5 +19,10 @@ class Perm {
   static const customersEdit = 'customers.edit';
   static const customersDelete = 'customers.delete';
 
+  static const productsView = 'products.view';
+  static const productsCreate = 'products.create';
+  static const productsEdit = 'products.edit';
+  static const productsDelete = 'products.delete';
+
   static const settingsPermissionsManage = 'settings.permissions.manage';
 }

@@ -15,6 +15,7 @@ import '../features/customers/presentation/customers_page.dart';
 import '../features/diagnostics/presentation/connection_check_page.dart';
 import '../features/home/presentation/home_page.dart';
 import '../features/invoices/presentation/invoices_page.dart';
+import '../features/products/presentation/products_page.dart';
 import '../features/settings/presentation/permissions_settings_page.dart';
 import '../features/settings/presentation/settings_page.dart';
 
@@ -44,6 +45,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/login', builder: (_, __) => const LoginPage()),
       GoRoute(path: '/invoices', builder: (_, __) => const InvoicesPage()),
       GoRoute(path: '/customers', builder: (_, __) => const CustomersPage()),
+      GoRoute(path: '/products', builder: (_, __) => const ProductsPage()),
       GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()),
       GoRoute(
         path: '/settings/permissions',

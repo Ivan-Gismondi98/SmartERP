@@ -8,6 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/format.dart';
 import '../../customers/application/customers_providers.dart';
 import '../../customers/domain/customer.dart';
+import '../../products/application/products_providers.dart';
+import '../../products/domain/product.dart';
 import '../../profile/application/profile_providers.dart';
 import '../data/invoices_repository.dart';
 import '../domain/invoice.dart';
@@ -121,6 +123,7 @@ class _InvoiceFormPageState extends ConsumerState<InvoiceFormPage> {
     }
     final inv = _draft!;
     final customersAsync = ref.watch(customersListProvider);
+    final products = ref.watch(productsListProvider).valueOrNull ?? const [];
 
     return Scaffold(
       appBar: AppBar(
@@ -213,6 +216,7 @@ class _InvoiceFormPageState extends ConsumerState<InvoiceFormPage> {
             _ItemEditor(
               key: ValueKey('item_${inv.items[i].hashCode}'),
               item: inv.items[i],
+              products: products,
               onChanged: _recompute,
               onRemove: inv.items.length > 1 ? () => _removeItem(i) : null,
             ),
@@ -268,17 +272,69 @@ class _InvoiceFormPageState extends ConsumerState<InvoiceFormPage> {
 // ============================================================
 //  Editor di una singola riga.
 // ============================================================
-class _ItemEditor extends StatelessWidget {
+class _ItemEditor extends StatefulWidget {
   const _ItemEditor({
     super.key,
     required this.item,
+    required this.products,
     required this.onChanged,
     this.onRemove,
   });
 
   final InvoiceItem item;
+  final List<Product> products;
   final VoidCallback onChanged;
   final VoidCallback? onRemove;
+
+  @override
+  State<_ItemEditor> createState() => _ItemEditorState();
+}
+
+class _ItemEditorState extends State<_ItemEditor> {
+  late final TextEditingController _desc;
+  late final TextEditingController _qty;
+  late final TextEditingController _price;
+  late final TextEditingController _disc;
+
+  InvoiceItem get item => widget.item;
+
+  @override
+  void initState() {
+    super.initState();
+    _desc = TextEditingController(text: item.description);
+    _qty = TextEditingController(
+        text: item.quantity == 0 ? '' : Fmt.qty(item.quantity));
+    _price = TextEditingController(
+        text: item.unitPrice == 0 ? '' : Fmt.amount(item.unitPrice));
+    _disc = TextEditingController(
+        text: item.discountPercent == 0 ? '' : Fmt.qty(item.discountPercent));
+  }
+
+  @override
+  void dispose() {
+    for (final c in [_desc, _qty, _price, _disc]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _pickProduct(String? id) {
+    setState(() {
+      if (id == null) {
+        item.productId = null;
+        return;
+      }
+      final p = widget.products.firstWhere((e) => e.id == id);
+      item.productId = p.id;
+      item.description = p.name;
+      item.unitPrice = p.unitPrice;
+      item.vatRate = p.vatRate;
+      if (p.vatRate != 0) item.vatNature = null;
+      _desc.text = p.name;
+      _price.text = p.unitPrice == 0 ? '' : Fmt.amount(p.unitPrice);
+    });
+    widget.onChanged();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -288,24 +344,51 @@ class _ItemEditor extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
+            if (widget.products.isNotEmpty)
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String?>(
+                      initialValue: item.productId,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Prodotto (scarica il magazzino)',
+                        isDense: true,
+                      ),
+                      items: [
+                        const DropdownMenuItem<String?>(
+                            value: null, child: Text('— Riga libera —')),
+                        for (final p in widget.products)
+                          DropdownMenuItem<String?>(
+                            value: p.id,
+                            child: Text(
+                                '${p.name} (giac. ${p.quantity})',
+                                overflow: TextOverflow.ellipsis),
+                          ),
+                      ],
+                      onChanged: _pickProduct,
+                    ),
+                  ),
+                ],
+              ),
             Row(
               children: [
                 Expanded(
                   child: TextFormField(
-                    initialValue: item.description,
+                    controller: _desc,
                     decoration:
                         const InputDecoration(labelText: 'Descrizione'),
                     onChanged: (v) {
                       item.description = v;
-                      onChanged();
+                      widget.onChanged();
                     },
                   ),
                 ),
-                if (onRemove != null)
+                if (widget.onRemove != null)
                   IconButton(
                     icon: const Icon(Icons.close),
                     tooltip: 'Rimuovi riga',
-                    onPressed: onRemove,
+                    onPressed: widget.onRemove,
                   ),
               ],
             ),
@@ -313,35 +396,41 @@ class _ItemEditor extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: _NumField(
-                    label: 'Qtà',
-                    value: item.quantity,
+                  child: TextFormField(
+                    controller: _qty,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(labelText: 'Qtà'),
                     onChanged: (v) {
-                      item.quantity = v ?? 0;
-                      onChanged();
+                      item.quantity = Fmt.parseAmount(v) ?? 0;
+                      widget.onChanged();
                     },
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   flex: 2,
-                  child: _MoneyField(
-                    label: 'Prezzo unit.',
-                    value: item.unitPrice,
+                  child: TextFormField(
+                    controller: _price,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(labelText: 'Prezzo unit.'),
                     onChanged: (v) {
-                      item.unitPrice = v ?? 0;
-                      onChanged();
+                      item.unitPrice = Fmt.parseAmount(v) ?? 0;
+                      widget.onChanged();
                     },
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _NumField(
-                    label: 'Sconto %',
-                    value: item.discountPercent,
+                  child: TextFormField(
+                    controller: _disc,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(labelText: 'Sconto %'),
                     onChanged: (v) {
-                      item.discountPercent = v ?? 0;
-                      onChanged();
+                      item.discountPercent = Fmt.parseAmount(v) ?? 0;
+                      widget.onChanged();
                     },
                   ),
                 ),
@@ -360,9 +449,11 @@ class _ItemEditor extends StatelessWidget {
                             value: r, child: Text(Fmt.percent(r))),
                     ],
                     onChanged: (v) {
-                      item.vatRate = v ?? 22;
-                      if (item.vatRate != 0) item.vatNature = null;
-                      onChanged();
+                      setState(() {
+                        item.vatRate = v ?? 22;
+                        if (item.vatRate != 0) item.vatNature = null;
+                      });
+                      widget.onChanged();
                     },
                   ),
                 ),
@@ -382,8 +473,8 @@ class _ItemEditor extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis)),
                       ],
                       onChanged: (v) {
-                        item.vatNature = v;
-                        onChanged();
+                        setState(() => item.vatNature = v);
+                        widget.onChanged();
                       },
                     ),
                   ),
