@@ -13,6 +13,7 @@ class Perm {
   static const invoicesIssue = 'invoices.issue';
   static const invoicesExport = 'invoices.export';
   static const invoicesPrint = 'invoices.print';
+  static const invoicesSdiSend = 'invoices.sdi_send';
 
   static const customersView = 'customers.view';
   static const customersCreate = 'customers.create';

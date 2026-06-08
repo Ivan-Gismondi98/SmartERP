@@ -31,7 +31,10 @@ const _roles = <(String, String)>[
 ];
 
 class PermissionsSettingsPage extends ConsumerWidget {
-  const PermissionsSettingsPage({super.key});
+  const PermissionsSettingsPage({super.key, this.moduleFilter});
+
+  /// Se valorizzato, mostra solo i permessi di quel modulo.
+  final String? moduleFilter;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -46,13 +49,21 @@ class PermissionsSettingsPage extends ConsumerWidget {
     }
 
     final dataAsync = ref.watch(_permissionsDataProvider);
+    final title = moduleFilter == null
+        ? 'Permessi per ruolo'
+        : 'Permessi · ${moduleFilter!.toUpperCase()}';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Permessi per ruolo')),
+      appBar: AppBar(title: Text(title)),
       body: dataAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Errore: $e')),
-        data: (data) => _Matrix(catalog: data.catalog, matrix: data.matrix),
+        data: (data) {
+          final catalog = moduleFilter == null
+              ? data.catalog
+              : data.catalog.where((p) => p.module == moduleFilter).toList();
+          return _Matrix(catalog: catalog, matrix: data.matrix);
+        },
       ),
     );
   }
@@ -65,7 +76,7 @@ class _Matrix extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Raggruppa per modulo per leggibilita'.
+    // Raggruppa per modulo, e dentro ogni modulo per tipo (generic/feature).
     final byModule = <String, List<PermissionDef>>{};
     for (final p in catalog) {
       (byModule[p.module] ??= []).add(p);
@@ -78,39 +89,56 @@ class _Matrix extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 16, 4, 4),
             child: Text(entry.key.toUpperCase(),
-                style: Theme.of(context).textTheme.titleSmall),
+                style: Theme.of(context).textTheme.titleMedium),
           ),
-          for (final perm in entry.value)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(perm.description,
-                        style: Theme.of(context).textTheme.titleSmall),
-                    Text(perm.code,
-                        style: Theme.of(context).textTheme.bodySmall),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 16,
-                      children: [
-                        for (final (roleDb, roleLabel) in _roles)
-                          _RoleToggle(
-                            roleDb: roleDb,
-                            roleLabel: roleLabel,
-                            code: perm.code,
-                            value: matrix[roleDb]?[perm.code] ?? false,
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          ..._kindSection(context, 'Permessi generici',
+              entry.value.where((p) => !p.isFeature).toList()),
+          ..._kindSection(context, 'Permessi di feature',
+              entry.value.where((p) => p.isFeature).toList()),
         ],
       ],
     );
+  }
+
+  List<Widget> _kindSection(
+      BuildContext context, String title, List<PermissionDef> perms) {
+    if (perms.isEmpty) return const [];
+    return [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(4, 8, 4, 2),
+        child: Text(title,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: Theme.of(context).colorScheme.primary)),
+      ),
+      for (final perm in perms)
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(perm.description,
+                    style: Theme.of(context).textTheme.titleSmall),
+                Text(perm.code,
+                    style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 16,
+                  children: [
+                    for (final (roleDb, roleLabel) in _roles)
+                      _RoleToggle(
+                        roleDb: roleDb,
+                        roleLabel: roleLabel,
+                        code: perm.code,
+                        value: matrix[roleDb]?[perm.code] ?? false,
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+    ];
   }
 }
 

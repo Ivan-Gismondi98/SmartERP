@@ -244,6 +244,7 @@ docker exec -i smarterp-db psql -U postgres -d postgres < volumes/db/post-init/0
 docker exec -i smarterp-db psql -U postgres -d postgres < volumes/db/post-init/05_step4_pdf_mora.sql
 docker exec -i smarterp-db psql -U postgres -d postgres < volumes/db/post-init/06_step5_magazzino.sql
 docker exec -i smarterp-db psql -U postgres -d postgres < volumes/db/post-init/07_step5b_distinta_base.sql
+docker exec -i smarterp-db psql -U postgres -d postgres < volumes/db/post-init/08_step6_impostazioni_sdi.sql
 # PostgREST deve ricaricare lo schema per vedere le nuove funzioni/colonne:
 docker exec smarterp-db psql -U postgres -d postgres -c "NOTIFY pgrst, 'reload schema';"
 ```

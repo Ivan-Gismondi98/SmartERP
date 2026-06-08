@@ -187,6 +187,14 @@ reale (firmandole con il tuo `JWT_SECRET`) e aggiorna di conseguenza
 - [x] **Permessi configurabili (stile Odoo)**: tabelle `permissions` /
       `role_permissions` (default globali + override per azienda), schermata
       *Impostazioni → Permessi* per attivare/disattivare i permessi per ruolo.
+- [x] **Impostazioni & SdI (STEP 6)**: sistema impostazioni gerarchico —
+      **generali** + **per-applicativo** (`app_settings` chiave/valore per
+      azienda con RLS); permessi divisi tra **generici** (CRUD) e **di feature**
+      (`permissions.kind`). **Feature toggle** per mostrare/nascondere il blocco
+      **firma/invio SdI** nel dettaglio fattura (gated anche da
+      `invoices.sdi_send`); stato trasmissione locale (`sdi_status`).
+      > La firma qualificata e l'invio reale allo SdI sono esterni
+      > (accreditamento); l'app registra lo stato localmente.
 - [~] **Fatturazione (STEP 4 — stampa & scadenze)**: **stampa PDF** della
       fattura (`pdf`+`printing`, anteprima con stampa/download anche su web),
       **termini di pagamento in giorni** che calcolano la scadenza, e

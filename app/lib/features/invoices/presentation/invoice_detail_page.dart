@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/format.dart';
 import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
+import '../../settings/application/settings_providers.dart';
 import '../application/invoices_providers.dart';
 import '../data/invoices_repository.dart';
 import '../domain/invoice.dart';
@@ -115,6 +116,12 @@ class _DetailBody extends ConsumerWidget {
                 const Divider(height: 32),
                 Text('Note', style: theme.textTheme.titleMedium),
                 Text(inv.notes!),
+              ],
+              if (inv.isIssued &&
+                  (ref.watch(sdiEnabledProvider).valueOrNull ?? false) &&
+                  ref.watch(canProvider(Perm.invoicesSdiSend))) ...[
+                const Divider(height: 32),
+                _SdiBlock(inv: inv, onChanged: onChanged),
               ],
             ],
           ),
@@ -296,6 +303,82 @@ class _DetailBody extends ConsumerWidget {
 
   void _snack(BuildContext context, String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+}
+
+/// Blocco firma/invio SdI — mostrato solo se la feature è abilitata dalle
+/// impostazioni e l'utente ha il permesso `invoices.sdi_send`.
+class _SdiBlock extends ConsumerWidget {
+  const _SdiBlock({required this.inv, required this.onChanged});
+  final Invoice inv;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final repo = ref.read(invoicesRepositoryProvider);
+
+    Future<void> set(String status) async {
+      try {
+        await repo.setSdiStatus(inv.id!, status);
+        onChanged();
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('Errore: $e')));
+        }
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.verified_outlined, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            Text('Firma / Invio SdI', style: theme.textTheme.titleMedium),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text('Stato: ${inv.sdiStatusLabel}'
+            '${inv.sdiSentAt != null ? ' · ${Fmt.date(inv.sdiSentAt)}' : ''}'),
+        Text(
+          'Trasmissione registrata localmente. La firma qualificata e l\'invio '
+          'effettivo allo SdI richiedono accreditamento e sono esterni all\'app.',
+          style: theme.textTheme.bodySmall,
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: [
+            if (inv.sdiStatus == 'not_sent')
+              FilledButton.icon(
+                onPressed: () => set('sent'),
+                icon: const Icon(Icons.send),
+                label: const Text('Invia allo SdI'),
+              ),
+            if (inv.sdiStatus == 'sent') ...[
+              FilledButton.tonalIcon(
+                onPressed: () => set('delivered'),
+                icon: const Icon(Icons.check),
+                label: const Text('Segna consegnata'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => set('rejected'),
+                icon: const Icon(Icons.error_outline),
+                label: const Text('Segna scartata'),
+              ),
+            ],
+            if (inv.sdiStatus != 'not_sent')
+              TextButton(
+                onPressed: () => set('not_sent'),
+                child: const Text('Reimposta'),
+              ),
+          ],
+        ),
+      ],
+    );
   }
 }
 

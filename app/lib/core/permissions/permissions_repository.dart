@@ -12,15 +12,22 @@ import '../supabase_providers.dart';
 /// Singola voce del catalogo permessi.
 class PermissionDef {
   const PermissionDef(
-      {required this.code, required this.module, required this.description});
+      {required this.code,
+      required this.module,
+      required this.description,
+      this.kind = 'generic'});
   final String code;
   final String module;
   final String description;
+  final String kind; // 'generic' | 'feature'
+
+  bool get isFeature => kind == 'feature';
 
   factory PermissionDef.fromJson(Map<String, dynamic> j) => PermissionDef(
         code: j['code'] as String,
         module: j['module'] as String,
         description: j['description'] as String,
+        kind: (j['kind'] as String?) ?? 'generic',
       );
 }
 
@@ -74,8 +81,10 @@ class PermissionsRepository {
   }
 
   Future<List<PermissionDef>> fetchCatalog() async {
-    final rows =
-        await _client.from('permissions').select('code, module, description').order('module');
+    final rows = await _client
+        .from('permissions')
+        .select('code, module, description, kind')
+        .order('module');
     return rows.map(PermissionDef.fromJson).toList();
   }
 

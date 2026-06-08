@@ -13,7 +13,7 @@ const _invoiceSelect =
     'issue_date, due_date, subtotal, tax_amount, total, stamp_duty, rounding, '
     'payment_method, payment_terms, payment_terms_days, '
     'interest_enabled, interest_rate, notes, numbering_year, numbering_seq, '
-    'reference_invoice_id, '
+    'reference_invoice_id, sdi_status, sdi_sent_at, '
     'customers ( id, company_id, name, is_company, vat_number, tax_code, '
     'address, zip, city, province, country, sdi_code, pec, email, phone )';
 
@@ -97,6 +97,17 @@ class InvoicesRepository {
 
   Future<void> setStatus(String id, InvoiceStatus status) async {
     await _client.from('invoices').update({'status': status.db}).eq('id', id);
+  }
+
+  /// Registra lo stato di trasmissione SdI (placeholder locale: la firma
+  /// qualificata e l'invio reale allo SdI richiedono accreditamento).
+  Future<void> setSdiStatus(String id, String sdiStatus) async {
+    await _client.from('invoices').update({
+      'sdi_status': sdiStatus,
+      'sdi_sent_at': sdiStatus == 'not_sent'
+          ? null
+          : DateTime.now().toUtc().toIso8601String(),
+    }).eq('id', id);
   }
 
   /// Crea una nuova BOZZA copiando righe e intestazione da [source].

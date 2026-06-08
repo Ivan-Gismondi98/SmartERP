@@ -127,6 +127,8 @@ class Invoice {
     this.numberingYear,
     this.numberingSeq,
     this.referenceInvoiceId,
+    this.sdiStatus = 'not_sent',
+    this.sdiSentAt,
     List<InvoiceItem>? items,
   })  : issueDate = issueDate ?? DateTime.now(),
         items = items ?? [];
@@ -151,7 +153,23 @@ class Invoice {
   int? numberingYear;
   int? numberingSeq;
   String? referenceInvoiceId;
+  String sdiStatus;
+  DateTime? sdiSentAt;
   List<InvoiceItem> items;
+
+  /// Etichetta leggibile dello stato di trasmissione SdI.
+  String get sdiStatusLabel {
+    switch (sdiStatus) {
+      case 'sent':
+        return 'Inviata allo SdI';
+      case 'delivered':
+        return 'Consegnata';
+      case 'rejected':
+        return 'Scartata';
+      default:
+        return 'Non inviata';
+    }
+  }
 
   bool get isDraft => status == InvoiceStatus.draft;
   bool get isIssued => !isDraft;
@@ -260,6 +278,10 @@ class Invoice {
       numberingYear: (j['numbering_year'] as num?)?.toInt(),
       numberingSeq: (j['numbering_seq'] as num?)?.toInt(),
       referenceInvoiceId: j['reference_invoice_id'] as String?,
+      sdiStatus: (j['sdi_status'] as String?) ?? 'not_sent',
+      sdiSentAt: j['sdi_sent_at'] == null
+          ? null
+          : DateTime.tryParse(j['sdi_sent_at'] as String),
       items: items,
     );
   }
