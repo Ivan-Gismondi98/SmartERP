@@ -24,6 +24,7 @@ import '../features/products/presentation/products_page.dart';
 import '../features/settings/presentation/permissions_settings_page.dart';
 import '../features/settings/presentation/settings_page.dart';
 import '../features/studio/presentation/studio_page.dart';
+import '../features/tickets/presentation/tickets_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Notifier che fa rivalutare il redirect a ogni cambio di sessione.
@@ -56,6 +57,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/studio', builder: (_, __) => const StudioPage()),
       GoRoute(path: '/errors', builder: (_, __) => const ErrorLogsPage()),
       GoRoute(path: '/dev', builder: (_, __) => const DevDashboardPage()),
+      GoRoute(path: '/tickets', builder: (_, __) => const TicketsPage()),
       GoRoute(path: '/users', builder: (_, __) => const UsersPage()),
       GoRoute(path: '/orgs', builder: (_, __) => const OrganizationsPage()),
       GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()),

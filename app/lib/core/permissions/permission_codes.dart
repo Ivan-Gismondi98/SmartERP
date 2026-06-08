@@ -34,6 +34,7 @@ class Perm {
   static const studioManage = 'studio.manage';
 
   static const errorsView = 'errors.view';
+  static const ticketsView = 'tickets.view';
 
   static const devDashboard = 'dev.dashboard';
   static const licensesManage = 'licenses.manage';

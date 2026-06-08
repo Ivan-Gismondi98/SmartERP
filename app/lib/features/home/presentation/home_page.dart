@@ -13,6 +13,7 @@ import '../../../core/permissions/permissions_providers.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../profile/application/profile_providers.dart';
 import '../../profile/domain/profile.dart';
+import '../../tickets/data/tickets_repository.dart';
 
 /// Modulo del gestionale mostrato come tile nella dashboard.
 class _Module {
@@ -51,6 +52,8 @@ const _modules = <_Module>[
       route: '/studio', requiredPermission: Perm.studioView, app: 'studio'),
   _Module('Bug del giorno', Icons.bug_report_outlined,
       route: '/errors', requiredPermission: Perm.errorsView),
+  _Module('Segnalazioni', Icons.confirmation_number_outlined,
+      route: '/tickets', requiredPermission: Perm.ticketsView),
   _Module('Dashboard Sviluppatore', Icons.developer_board_outlined,
       route: '/dev', requiredPermission: Perm.devDashboard),
   _Module('Utenti', Icons.manage_accounts_outlined,
@@ -67,11 +70,26 @@ class HomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(currentProfileProvider);
+    final perms = ref.watch(allowedPermissionsProvider).valueOrNull ?? const {};
+    final canTickets = perms.contains(Perm.ticketsView);
+    // Attiva lo stream realtime solo se l'utente può vedere i ticket.
+    final openTickets =
+        canTickets ? ref.watch(openTicketsCountProvider) : 0;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('SmartERP'),
         actions: [
+          if (canTickets)
+            IconButton(
+              tooltip: 'Segnalazioni',
+              icon: Badge(
+                isLabelVisible: openTickets > 0,
+                label: Text('$openTickets'),
+                child: const Icon(Icons.notifications_outlined),
+              ),
+              onPressed: () => context.push('/tickets'),
+            ),
           IconButton(
             tooltip: 'Esci',
             icon: const Icon(Icons.logout),

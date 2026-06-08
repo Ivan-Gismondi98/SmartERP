@@ -8,6 +8,9 @@ import 'package:intl/intl.dart';
 
 import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
+import '../../profile/application/profile_providers.dart';
+import '../../profile/domain/profile.dart';
+import '../../tickets/data/tickets_repository.dart';
 import '../application/error_logs_providers.dart';
 import '../data/error_logs_repository.dart';
 import '../domain/error_log.dart';
@@ -170,21 +173,69 @@ class _ErrorTile extends ConsumerWidget {
             child: SelectableText(log.details!,
                 style: const TextStyle(fontFamily: 'monospace', fontSize: 11)),
           ),
-        if (canDelete)
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: () async {
-                try {
-                  await ref.read(errorLogsRepositoryProvider).delete(log.id);
-                  ref.invalidate(errorLogsProvider);
-                } catch (_) {}
-              },
-              icon: const Icon(Icons.delete_outline),
-              label: const Text('Elimina'),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            TextButton.icon(
+              onPressed: () => _notify(context, ref),
+              icon: const Icon(Icons.notifications_active_outlined),
+              label: Text(_notifyLabel(ref)),
             ),
-          ),
+            if (canDelete)
+              TextButton.icon(
+                onPressed: () async {
+                  try {
+                    await ref.read(errorLogsRepositoryProvider).delete(log.id);
+                    ref.invalidate(errorLogsProvider);
+                  } catch (_) {}
+                },
+                icon: const Icon(Icons.delete_outline),
+                label: const Text('Elimina'),
+              ),
+          ],
+        ),
       ],
     );
+  }
+
+  String _notifyLabel(WidgetRef ref) {
+    final role = ref.read(currentProfileProvider).valueOrNull?.role;
+    return role == UserRole.admin
+        ? 'Notifica allo sviluppatore'
+        : 'Notifica all\'amministratore';
+  }
+
+  Future<void> _notify(BuildContext context, WidgetRef ref) async {
+    final profile = ref.read(currentProfileProvider).valueOrNull;
+    if (profile == null) return;
+    // Admin → sviluppatore; dipendente (e altri) → amministratore.
+    final target = profile.role == UserRole.admin ? 'developer' : 'admin';
+    try {
+      await ref.read(ticketsRepositoryProvider).createFromError(
+            title: log.message,
+            description: [
+              if (log.module != null) 'Modulo: ${log.module}',
+              if (log.route != null) 'Rotta: ${log.route}',
+              if (log.details != null) '\n${log.details}',
+            ].join('\n'),
+            target: target,
+            priority: log.severity == 'fatal'
+                ? 'high'
+                : (log.severity == 'warning' ? 'low' : 'medium'),
+            companyId: profile.companyId,
+            errorLogId: log.id,
+          );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(target == 'developer'
+                ? 'Segnalazione inviata allo sviluppatore.'
+                : 'Segnalazione inviata all\'amministratore.')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Errore: $e')));
+      }
+    }
   }
 }

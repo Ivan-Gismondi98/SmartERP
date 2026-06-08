@@ -279,9 +279,13 @@ reale (firmandole con il tuo `JWT_SECRET`) e aggiorna di conseguenza
       dashboard si filtrano di conseguenza. L'**admin** gestisce di default gli
       **utenti della propria org** (CRUD, ruoli limitati, mai super_admin) via
       RPC sicure (`org.users.manage`).
-- [ ] **Notifiche realtime** ("Notifica" dipendente→admin, admin→sviluppatore),
-      **ticket** con stato di avanzamento, **chat diretta admin↔sviluppatore**
-      con allegati, **export Excel** segnalazioni.
+- [~] **Segnalazioni/ticket (STEP 15a)**: pulsante **"Notifica"** sotto ogni
+      errore — dipendente→**amministratore**, admin→**sviluppatore** — che crea
+      un **ticket** collegato all'errore; lista **realtime** (badge in AppBar)
+      con **stato di avanzamento** (aperto/in lavorazione/risolto/chiuso) e
+      **export Excel (.xlsx)** delle segnalazioni. RLS: employee i propri,
+      admin la propria org, super_admin tutto. Gated `tickets.view`.
+      Resta (STEP 15b): chat/thread sul ticket con **allegati**.
 
 ### DevOps
 - [ ] Reverse proxy HTTPS (Caddy/Traefik) + certificati per la produzione.
