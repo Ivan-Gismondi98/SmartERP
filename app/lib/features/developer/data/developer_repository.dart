@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase_providers.dart';
+import '../domain/app_bundle.dart';
 import '../domain/license.dart';
 
 /// Dati aggregati della dashboard.
@@ -35,7 +36,7 @@ class DeveloperRepository {
 
   static const _licSelect =
       'id, company_id, name, status, price, period, start_date, renewal_date, '
-      'notes, companies ( name )';
+      'notes, app_code, app_codes, companies ( name )';
 
   Future<List<License>> listLicenses() async {
     final rows = await _client
@@ -55,6 +56,27 @@ class DeveloperRepository {
 
   Future<void> delete(String id) async {
     await _client.from('licenses').delete().eq('id', id);
+  }
+
+  // ----- Bundle (pacchetti) -----
+  Future<List<AppBundle>> listBundles() async {
+    final rows = await _client
+        .from('app_bundles')
+        .select('id, name, description, app_codes, price, period')
+        .order('name');
+    return rows.map(AppBundle.fromJson).toList();
+  }
+
+  Future<void> createBundle(AppBundle b) async {
+    await _client.from('app_bundles').insert(b.toJson());
+  }
+
+  Future<void> updateBundle(AppBundle b) async {
+    await _client.from('app_bundles').update(b.toJson()).eq('id', b.id);
+  }
+
+  Future<void> deleteBundle(String id) async {
+    await _client.from('app_bundles').delete().eq('id', id);
   }
 
   Future<void> addPayment(

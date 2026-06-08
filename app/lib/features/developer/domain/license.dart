@@ -13,6 +13,7 @@ class License {
     this.startDate,
     this.renewalDate,
     this.notes,
+    this.appCodes = const ['suite'],
   });
 
   final String id;
@@ -25,6 +26,9 @@ class License {
   final DateTime? startDate;
   final DateTime? renewalDate;
   final String? notes;
+
+  /// App abilitate da questa licenza ('suite' = tutte).
+  final List<String> appCodes;
 
   bool overdueAt(DateTime now) =>
       status == 'active' &&
@@ -46,6 +50,10 @@ class License {
             ? null
             : DateTime.tryParse(j['renewal_date'] as String),
         notes: j['notes'] as String?,
+        appCodes: ((j['app_codes'] as List?)
+                ?.map((e) => e as String)
+                .toList()) ??
+            [if (j['app_code'] != null) j['app_code'] as String else 'suite'],
       );
 
   Map<String, dynamic> toJson() => {
@@ -57,6 +65,11 @@ class License {
         'start_date': _d(startDate),
         'renewal_date': _d(renewalDate),
         'notes': notes,
+        'app_codes': appCodes,
+        // app_code (colonna legacy NOT NULL): primo codice o 'suite'.
+        'app_code': appCodes.contains('suite')
+            ? 'suite'
+            : (appCodes.isNotEmpty ? appCodes.first : 'suite'),
       };
 
   static String? _d(DateTime? d) => d == null ? null : staticDate(d);

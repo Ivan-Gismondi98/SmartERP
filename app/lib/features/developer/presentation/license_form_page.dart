@@ -5,13 +5,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/format.dart';
+import '../../../core/licensing.dart';
 import '../application/developer_providers.dart';
 import '../data/developer_repository.dart';
 import '../domain/license.dart';
 
 class LicenseFormPage extends ConsumerStatefulWidget {
-  const LicenseFormPage({super.key, this.license});
+  const LicenseFormPage({super.key, this.license, this.presetCompanyId});
   final License? license;
+
+  /// Azienda pre-selezionata (quando si crea una licenza da un'organizzazione).
+  final String? presetCompanyId;
 
   @override
   ConsumerState<LicenseFormPage> createState() => _LicenseFormPageState();
@@ -28,11 +32,18 @@ class _LicenseFormPageState extends ConsumerState<LicenseFormPage> {
   DateTime? _renewal;
   bool _saving = false;
 
+  // Tipo di licenza: suite | single | bundle.
+  String _kind = 'suite';
+  String _singleApp = 'invoices';
+  String? _bundleId;
+  List<String> _appCodes = const ['suite'];
+
   License? get _existing => widget.license;
 
   @override
   void initState() {
     super.initState();
+    _companyId = widget.presetCompanyId;
     final l = _existing;
     if (l != null) {
       _companyId = l.companyId;
@@ -43,6 +54,15 @@ class _LicenseFormPageState extends ConsumerState<LicenseFormPage> {
       _period = l.period;
       _start = l.startDate ?? DateTime.now();
       _renewal = l.renewalDate;
+      _appCodes = l.appCodes;
+      if (l.appCodes.contains('suite')) {
+        _kind = 'suite';
+      } else if (l.appCodes.length == 1) {
+        _kind = 'single';
+        _singleApp = l.appCodes.first;
+      } else {
+        _kind = 'bundle';
+      }
     }
   }
 
@@ -60,6 +80,11 @@ class _LicenseFormPageState extends ConsumerState<LicenseFormPage> {
       return;
     }
     setState(() => _saving = true);
+    final codes = switch (_kind) {
+      'single' => [_singleApp],
+      'bundle' => _appCodes.where((c) => c != 'suite').toList(),
+      _ => const ['suite'],
+    };
     final l = License(
       id: _existing?.id ?? '',
       companyId: _companyId!,
@@ -70,6 +95,7 @@ class _LicenseFormPageState extends ConsumerState<LicenseFormPage> {
       startDate: _start,
       renewalDate: _renewal,
       notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+      appCodes: codes.isEmpty ? const ['suite'] : codes,
     );
     try {
       final repo = ref.read(developerRepositoryProvider);
@@ -114,6 +140,59 @@ class _LicenseFormPageState extends ConsumerState<LicenseFormPage> {
               onChanged: (v) => setState(() => _companyId = v),
             ),
           ),
+          const SizedBox(height: 12),
+          // Tipo di licenza: Suite / Singola app / Pacchetto.
+          SegmentedButton<String>(
+            segments: const [
+              ButtonSegment(value: 'suite', label: Text('Suite')),
+              ButtonSegment(value: 'single', label: Text('Singola app')),
+              ButtonSegment(value: 'bundle', label: Text('Pacchetto')),
+            ],
+            selected: {_kind},
+            onSelectionChanged: (s) => setState(() => _kind = s.first),
+          ),
+          const SizedBox(height: 12),
+          if (_kind == 'single')
+            DropdownButtonFormField<String>(
+              initialValue: _singleApp,
+              decoration: const InputDecoration(labelText: 'Applicazione'),
+              items: [
+                for (final c in kAppModules)
+                  DropdownMenuItem(value: c, child: Text(appLabel(c))),
+              ],
+              onChanged: (v) => setState(() => _singleApp = v ?? 'invoices'),
+            ),
+          if (_kind == 'bundle')
+            ref.watch(bundlesListProvider).when(
+                  loading: () => const LinearProgressIndicator(),
+                  error: (e, _) => Text('Errore pacchetti: $e'),
+                  data: (bundles) => DropdownButtonFormField<String>(
+                    initialValue: _bundleId,
+                    isExpanded: true,
+                    decoration:
+                        const InputDecoration(labelText: 'Pacchetto'),
+                    items: [
+                      for (final b in bundles)
+                        DropdownMenuItem(
+                            value: b.id,
+                            child: Text(
+                                '${b.name} (${b.appCodes.map(appLabel).join(', ')})',
+                                overflow: TextOverflow.ellipsis)),
+                    ],
+                    onChanged: (v) {
+                      final b = bundles.firstWhere((e) => e.id == v);
+                      setState(() {
+                        _bundleId = v;
+                        _appCodes = b.appCodes;
+                        if (_name.text.trim().isEmpty) _name.text = b.name;
+                        if (_price.text.trim().isEmpty && b.price > 0) {
+                          _price.text = Fmt.amount(b.price);
+                        }
+                        _period = b.period;
+                      });
+                    },
+                  ),
+                ),
           const SizedBox(height: 12),
           TextField(
             controller: _name,

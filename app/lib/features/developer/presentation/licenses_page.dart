@@ -11,7 +11,11 @@ import '../domain/license.dart';
 import 'license_form_page.dart';
 
 class LicensesPage extends ConsumerWidget {
-  const LicensesPage({super.key});
+  const LicensesPage({super.key, this.companyId, this.companyName});
+
+  /// Se valorizzato, mostra solo le licenze di quell'organizzazione.
+  final String? companyId;
+  final String? companyName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -19,7 +23,8 @@ class LicensesPage extends ConsumerWidget {
     final now = DateTime.now();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Licenze')),
+      appBar: AppBar(
+          title: Text(companyName != null ? 'Licenze · $companyName' : 'Licenze')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _open(context, ref, null),
         icon: const Icon(Icons.add),
@@ -28,7 +33,10 @@ class LicensesPage extends ConsumerWidget {
       body: listAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Errore: $e')),
-        data: (licenses) {
+        data: (all) {
+          final licenses = companyId == null
+              ? all
+              : all.where((l) => l.companyId == companyId).toList();
           if (licenses.isEmpty) {
             return const Center(child: Text('Nessuna licenza.'));
           }
@@ -72,8 +80,9 @@ class LicensesPage extends ConsumerWidget {
   }
 
   Future<void> _open(BuildContext context, WidgetRef ref, License? l) async {
-    final saved = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(builder: (_) => LicenseFormPage(license: l)));
+    final saved = await Navigator.of(context).push<bool>(MaterialPageRoute(
+        builder: (_) =>
+            LicenseFormPage(license: l, presetCompanyId: companyId)));
     if (saved == true) {
       ref.invalidate(licensesListProvider);
       ref.invalidate(dashboardProvider);

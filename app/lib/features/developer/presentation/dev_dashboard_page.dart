@@ -8,6 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/format.dart';
 import '../../errors/domain/error_log.dart';
 import '../application/developer_providers.dart';
+import 'account_requests_page.dart';
+import 'bundles_page.dart';
 import 'licenses_page.dart';
 
 class DevDashboardPage extends ConsumerWidget {
@@ -56,11 +58,29 @@ class DevDashboardPage extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 8),
-            FilledButton.tonalIcon(
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => const LicensesPage())),
-              icon: const Icon(Icons.workspace_premium_outlined),
-              label: const Text('Gestisci licenze e pagamenti'),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton.tonalIcon(
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const LicensesPage())),
+                  icon: const Icon(Icons.workspace_premium_outlined),
+                  label: const Text('Licenze e pagamenti'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const BundlesPage())),
+                  icon: const Icon(Icons.widgets_outlined),
+                  label: const Text('Pacchetti di licenze'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const AccountRequestsPage())),
+                  icon: const Icon(Icons.mail_outline),
+                  label: const Text('Richieste account'),
+                ),
+              ],
             ),
             const Divider(height: 32),
             Text('Bug rilevati (ultimi 30 giorni)',

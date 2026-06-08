@@ -1,9 +1,11 @@
 // ============================================================
-//  SMARTERP · login_page.dart — schermata di login / registrazione.
+//  SMARTERP · login_page.dart — accesso. La registrazione è riservata
+//  al super_admin (sviluppatore): qui si può solo richiedere un account.
 // ============================================================
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../developer/data/account_requests_repository.dart';
 import '../application/auth_providers.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -17,38 +19,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
-  final _nameCtrl = TextEditingController();
-
-  bool _isSignUp = false;
   bool _obscure = true;
 
   @override
   void dispose() {
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
-    _nameCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    final controller = ref.read(authControllerProvider.notifier);
-    final email = _emailCtrl.text;
-    final password = _passwordCtrl.text;
-
-    final ok = _isSignUp
-        ? await controller.signUp(email, password, _nameCtrl.text)
-        : await controller.signIn(email, password);
-
-    if (!mounted) return;
-    if (ok && _isSignUp) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Registrazione completata. Ora puoi accedere.'),
-        ),
-      );
-      setState(() => _isSignUp = false);
-    }
+    await ref
+        .read(authControllerProvider.notifier)
+        .signIn(_emailCtrl.text, _passwordCtrl.text);
     // In caso di login riuscito, il redirect del router porta alla home.
   }
 
@@ -58,7 +42,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final isLoading = authState.isLoading;
     final theme = Theme.of(context);
 
-    // Mostra eventuali errori di autenticazione in uno SnackBar.
     ref.listen(authControllerProvider, (prev, next) {
       next.whenOrNull(
         error: (err, _) {
@@ -93,21 +76,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineMedium),
                   const SizedBox(height: 4),
-                  Text(_isSignUp ? 'Crea un account' : 'Accedi al gestionale',
+                  Text('Accedi al gestionale',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium),
                   const SizedBox(height: 32),
-                  if (_isSignUp) ...[
-                    TextFormField(
-                      controller: _nameCtrl,
-                      textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Nome completo',
-                        prefixIcon: Icon(Icons.person_outline),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
                   TextFormField(
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
@@ -141,13 +113,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         onPressed: () => setState(() => _obscure = !_obscure),
                       ),
                     ),
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return 'Inserisci la password';
-                      if (_isSignUp && v.length < 6) {
-                        return 'Almeno 6 caratteri';
-                      }
-                      return null;
-                    },
+                    validator: (v) =>
+                        (v == null || v.isEmpty) ? 'Inserisci la password' : null,
                   ),
                   const SizedBox(height: 24),
                   FilledButton(
@@ -158,20 +125,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ? const SizedBox(
                               height: 20,
                               width: 20,
-                              child:
-                                  CircularProgressIndicator(strokeWidth: 2.5),
+                              child: CircularProgressIndicator(strokeWidth: 2.5),
                             )
-                          : Text(_isSignUp ? 'Registrati' : 'Accedi'),
+                          : const Text('Accedi'),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: isLoading
-                        ? null
-                        : () => setState(() => _isSignUp = !_isSignUp),
-                    child: Text(_isSignUp
-                        ? 'Hai gia\' un account? Accedi'
-                        : 'Non hai un account? Registrati'),
+                  TextButton.icon(
+                    onPressed:
+                        isLoading ? null : () => _requestAccount(context),
+                    icon: const Icon(Icons.mail_outline),
+                    label: const Text('Richiedi un account allo sviluppatore'),
                   ),
                 ],
               ),
@@ -182,14 +146,139 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
+  Future<void> _requestAccount(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (_) => const _AccountRequestDialog(),
+    );
+  }
+
   String _friendlyError(Object err) {
     final msg = err.toString();
     if (msg.contains('Invalid login credentials')) {
       return 'Credenziali non valide.';
     }
-    if (msg.contains('already registered')) {
-      return 'Email gia\' registrata.';
-    }
     return 'Errore: $msg';
+  }
+}
+
+class _AccountRequestDialog extends ConsumerStatefulWidget {
+  const _AccountRequestDialog();
+
+  @override
+  ConsumerState<_AccountRequestDialog> createState() =>
+      _AccountRequestDialogState();
+}
+
+class _AccountRequestDialogState
+    extends ConsumerState<_AccountRequestDialog> {
+  final _name = TextEditingController();
+  final _email = TextEditingController();
+  final _org = TextEditingController();
+  final _msg = TextEditingController();
+  bool _busy = false;
+  bool _done = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    for (final c in [_name, _email, _org, _msg]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _send() async {
+    if (!_email.text.contains('@')) {
+      setState(() => _error = 'Inserisci un\'email valida');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(accountRequestsRepositoryProvider).submit(
+            email: _email.text,
+            name: _name.text,
+            organization: _org.text,
+            message: _msg.text,
+          );
+      setState(() {
+        _done = true;
+        _busy = false;
+      });
+    } catch (e) {
+      setState(() {
+        _busy = false;
+        _error = '$e';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_done) {
+      return AlertDialog(
+        title: const Text('Richiesta inviata'),
+        content: const Text(
+            'La tua richiesta è stata inviata allo sviluppatore. '
+            'Verrai contattato all\'email indicata quando l\'account sarà creato.'),
+        actions: [
+          FilledButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Chiudi')),
+        ],
+      );
+    }
+    return AlertDialog(
+      title: const Text('Richiedi un account'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+                'La registrazione è gestita dallo sviluppatore. Compila i dati e '
+                'indica per quale organizzazione richiedi l\'utenza.'),
+            const SizedBox(height: 12),
+            TextField(
+                controller: _name,
+                decoration: const InputDecoration(labelText: 'Nome e cognome')),
+            TextField(
+                controller: _email,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(labelText: 'Email *')),
+            TextField(
+                controller: _org,
+                decoration: const InputDecoration(
+                    labelText: 'Organizzazione (per quale azienda)')),
+            TextField(
+                controller: _msg,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                    labelText: 'Messaggio (ruolo desiderato, note…)')),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(_error!,
+                    style:
+                        TextStyle(color: Theme.of(context).colorScheme.error)),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+            onPressed: _busy ? null : () => Navigator.pop(context),
+            child: const Text('Annulla')),
+        FilledButton(
+          onPressed: _busy ? null : _send,
+          child: _busy
+              ? const SizedBox(
+                  width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Text('Invia richiesta'),
+        ),
+      ],
+    );
   }
 }

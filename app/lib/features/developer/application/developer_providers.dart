@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase_providers.dart';
 import '../data/developer_repository.dart';
+import '../domain/app_bundle.dart';
 import '../domain/license.dart';
 
 /// Elenco organizzazioni (id, name) per i selettori del developer.
@@ -26,4 +27,8 @@ final dashboardProvider = FutureProvider<DashboardData>((ref) async {
 
 final licensesListProvider = FutureProvider<List<License>>((ref) async {
   return ref.watch(developerRepositoryProvider).listLicenses();
+});
+
+final bundlesListProvider = FutureProvider<List<AppBundle>>((ref) async {
+  return ref.watch(developerRepositoryProvider).listBundles();
 });

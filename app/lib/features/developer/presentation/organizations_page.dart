@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/developer_providers.dart';
 import '../data/admin_repository.dart';
+import 'licenses_page.dart';
 
 class OrganizationsPage extends ConsumerWidget {
   const OrganizationsPage({super.key});
@@ -40,8 +41,17 @@ class OrganizationsPage extends ConsumerWidget {
                 onSelected: (v) {
                   if (v == 'edit') _edit(context, ref, o);
                   if (v == 'del') _delete(context, ref, o);
+                  if (v == 'lic') {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => LicensesPage(
+                        companyId: o['id'] as String,
+                        companyName: o['name'] as String?,
+                      ),
+                    ));
+                  }
                 },
                 itemBuilder: (_) => const [
+                  PopupMenuItem(value: 'lic', child: Text('Licenze')),
                   PopupMenuItem(value: 'edit', child: Text('Modifica')),
                   PopupMenuItem(value: 'del', child: Text('Elimina')),
                 ],
