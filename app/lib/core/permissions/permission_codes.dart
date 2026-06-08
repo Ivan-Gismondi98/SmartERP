@@ -11,6 +11,7 @@ class Perm {
   static const invoicesEdit = 'invoices.edit';
   static const invoicesDelete = 'invoices.delete';
   static const invoicesIssue = 'invoices.issue';
+  static const invoicesExport = 'invoices.export';
 
   static const customersView = 'customers.view';
   static const customersCreate = 'customers.create';

@@ -23,7 +23,9 @@ class ProfileRepository {
         .from('profiles')
         .select(
             'id, company_id, full_name, role, avatar_url, phone, is_active, '
-            'companies ( id, name, vat_number, email, theme_settings )')
+            'companies ( id, name, vat_number, tax_code, regime_fiscale, '
+            'address, zip, city, province, country, transmission_format, '
+            'email, theme_settings )')
         .eq('id', userId)
         .maybeSingle();
 

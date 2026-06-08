@@ -239,7 +239,9 @@ sistema permessi. Da eseguire DOPO `99_smarterp_post_auth.sql`:
 
 ```powershell
 docker exec -i smarterp-db psql -U postgres -d postgres < volumes/db/post-init/02_step1_fatture_permessi.sql
-# PostgREST deve ricaricare lo schema per vedere la nuova funzione RPC:
+docker exec -i smarterp-db psql -U postgres -d postgres < volumes/db/post-init/03_step2_gestione.sql
+docker exec -i smarterp-db psql -U postgres -d postgres < volumes/db/post-init/04_step3_fatturapa.sql
+# PostgREST deve ricaricare lo schema per vedere le nuove funzioni/colonne:
 docker exec smarterp-db psql -U postgres -d postgres -c "NOTIFY pgrst, 'reload schema';"
 ```
 

@@ -11,6 +11,7 @@ import '../application/invoices_providers.dart';
 import '../data/invoices_repository.dart';
 import '../domain/invoice.dart';
 import 'invoice_form_page.dart';
+import 'invoice_xml_page.dart';
 
 class InvoiceDetailPage extends ConsumerWidget {
   const InvoiceDetailPage({super.key, required this.invoiceId});
@@ -23,6 +24,7 @@ class InvoiceDetailPage extends ConsumerWidget {
     final canIssue = ref.watch(canProvider(Perm.invoicesIssue));
     final canDelete = ref.watch(canProvider(Perm.invoicesDelete));
     final canCreate = ref.watch(canProvider(Perm.invoicesCreate));
+    final canExport = ref.watch(canProvider(Perm.invoicesExport));
 
     return Scaffold(
       appBar: AppBar(
@@ -37,6 +39,7 @@ class InvoiceDetailPage extends ConsumerWidget {
           canIssue: canIssue,
           canDelete: canDelete,
           canCreate: canCreate,
+          canExport: canExport,
           onChanged: () => ref.invalidate(invoiceDetailProvider(invoiceId)),
         ),
       ),
@@ -51,6 +54,7 @@ class _DetailBody extends ConsumerWidget {
     required this.canIssue,
     required this.canDelete,
     required this.canCreate,
+    required this.canExport,
     required this.onChanged,
   });
 
@@ -59,6 +63,7 @@ class _DetailBody extends ConsumerWidget {
   final bool canIssue;
   final bool canDelete;
   final bool canCreate;
+  final bool canExport;
   final VoidCallback onChanged;
 
   @override
@@ -149,6 +154,16 @@ class _DetailBody extends ConsumerWidget {
                         _mark(context, repo, InvoiceStatus.cancelled),
                     icon: const Icon(Icons.block),
                     label: const Text('Annulla'),
+                  ),
+                if (inv.isIssued && canExport)
+                  FilledButton.tonalIcon(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => InvoiceXmlPage(invoice: inv),
+                      ),
+                    ),
+                    icon: const Icon(Icons.code),
+                    label: const Text('Esporta XML'),
                   ),
                 if (canCreate)
                   OutlinedButton.icon(

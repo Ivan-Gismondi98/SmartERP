@@ -48,6 +48,14 @@ class Company {
     required this.id,
     required this.name,
     this.vatNumber,
+    this.taxCode,
+    this.regimeFiscale = 'RF01',
+    this.address,
+    this.zip,
+    this.city,
+    this.province,
+    this.country = 'IT',
+    this.transmissionFormat = 'FPR12',
     this.email,
     this.themeSettings = const {},
   });
@@ -55,14 +63,37 @@ class Company {
   final String id;
   final String name;
   final String? vatNumber;
+  final String? taxCode;
+  final String regimeFiscale;
+  final String? address;
+  final String? zip;
+  final String? city;
+  final String? province;
+  final String country;
+  final String transmissionFormat;
   final String? email;
   final Map<String, dynamic> themeSettings;
+
+  /// P.IVA senza eventuale prefisso "IT".
+  String? get vatDigits {
+    final v = vatNumber?.trim();
+    if (v == null || v.isEmpty) return null;
+    return v.toUpperCase().startsWith('IT') ? v.substring(2) : v;
+  }
 
   factory Company.fromJson(Map<String, dynamic> json) {
     return Company(
       id: json['id'] as String,
       name: (json['name'] as String?) ?? 'Azienda',
       vatNumber: json['vat_number'] as String?,
+      taxCode: json['tax_code'] as String?,
+      regimeFiscale: (json['regime_fiscale'] as String?) ?? 'RF01',
+      address: json['address'] as String?,
+      zip: json['zip'] as String?,
+      city: json['city'] as String?,
+      province: json['province'] as String?,
+      country: (json['country'] as String?) ?? 'IT',
+      transmissionFormat: (json['transmission_format'] as String?) ?? 'FPR12',
       email: json['email'] as String?,
       themeSettings:
           (json['theme_settings'] as Map?)?.cast<String, dynamic>() ?? const {},

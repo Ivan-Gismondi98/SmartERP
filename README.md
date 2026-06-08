@@ -173,7 +173,17 @@ reale (firmandole con il tuo `JWT_SECRET`) e aggiorna di conseguenza
       sulla lista, **KPI di riepilogo** (documenti, emesso netto, incassato,
       scadute), evidenza fatture **scadute** (oltre la data di scadenza),
       **note di credito (TD04)** collegate alla fattura d'origine, **duplica
-      documento**, ricerca clienti. Manca (step finale): **export XML FatturaPA**.
+      documento**, ricerca clienti.
+- [x] **Fatturazione (STEP 3 — export XML FatturaPA)**: generazione dell'XML
+      Fattura Elettronica (tracciato SdI `FatturaElettronica v1.2.2`) —
+      `DatiTrasmissione`, `CedentePrestatore` (dati fiscali azienda),
+      `CessionarioCommittente`, `DatiGeneraliDocumento` (con `DatiBollo`),
+      `DettaglioLinee` (con `ScontoMaggiorazione`/`Natura`) e `DatiRiepilogo`
+      per aliquota. Anteprima in-app + **copia** e **download `.xml`**
+      (nome file `IT<piva>_<progressivo>.xml`). Azione gated da
+      `invoices.export`.
+      > L'XML **non** è firmato digitalmente (`.p7m`): firma qualificata e
+      > invio allo SdI restano passaggi esterni (accreditamento).
 - [x] **Permessi configurabili (stile Odoo)**: tabelle `permissions` /
       `role_permissions` (default globali + override per azienda), schermata
       *Impostazioni → Permessi* per attivare/disattivare i permessi per ruolo.
