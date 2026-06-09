@@ -72,6 +72,11 @@ class Perm {
   static const maintenanceDelete = 'maintenance.delete';
   static const maintenanceEquipment = 'maintenance.equipment';
 
+  static const projectsView = 'projects.view';
+  static const projectsCreate = 'projects.create';
+  static const projectsEdit = 'projects.edit';
+  static const projectsDelete = 'projects.delete';
+
   static const chatView = 'chat.view';
   static const chatSend = 'chat.send';
   static const chatManage = 'chat.manage';
