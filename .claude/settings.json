@@ -5,7 +5,12 @@
       "PowerShell(docker exec smarterp-db psql -U postgres -d postgres -c \"select provider, provider_id, user_id from auth.identities where identity_data->>'email'='dev@smarterp.local';\" 2>&1)",
       "PowerShell(docker exec smarterp-db psql -U postgres -d postgres -c \"select id, name, role from public.profiles p join auth.users u on u.id=p.id where u.email='dev@smarterp.local';\" 2>&1)",
       "PowerShell(docker exec smarterp-db psql -U postgres -d postgres -c \"select table_name, column_name, data_type from information_schema.columns where table_schema='auth' and table_name in \\('users','identities'\\) and is_nullable='NO' and column_default is null order by table_name, ordinal_position;\")",
-      "PowerShell(docker exec -i smarterp-db psql -U postgres -d postgres)"
+      "PowerShell(docker exec -i smarterp-db psql -U postgres -d postgres)",
+      "PowerShell(docker exec smarterp-db psql -U postgres -d postgres -c \"select c.id, c.name from public.companies c;\")",
+      "PowerShell(docker exec smarterp-db psql -U postgres -d postgres -c \"select u.email, p.role, p.company_id from public.profiles p join auth.users u on u.id=p.id order by p.role;\")",
+      "PowerShell(docker exec smarterp-db psql -U postgres -d postgres -c \"select table_name from information_schema.columns where table_schema='public' and column_name='company_id' order by table_name;\")",
+      "PowerShell(docker exec smarterp-db psql -U postgres -d postgres -c \"select tc.table_name, rc.delete_rule from information_schema.referential_constraints rc join information_schema.table_constraints tc on tc.constraint_name=rc.constraint_name where tc.table_schema='public' and tc.table_name in \\('invoice_items','inventory','bom_components'\\) order by tc.table_name;\")",
+      "PowerShell(flutter analyze app/lib/features/tickets 2>&1)"
     ]
   }
 }

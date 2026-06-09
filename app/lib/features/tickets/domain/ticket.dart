@@ -87,7 +87,12 @@ const kTicketStatuses = <String, String>{
   'in_progress': 'In lavorazione',
   'resolved': 'Risolto',
   'closed': 'Chiuso',
+  'cancelled': 'Abbandonata',
 };
+
+/// Stati "attivi": le segnalazioni mostrate nella lista principale.
+/// Risolte/chiuse/abbandonate si vedono solo nella sezione Report.
+const kTicketActiveStatuses = <String>{'open', 'in_progress'};
 
 String ticketStatusLabel(String s) => kTicketStatuses[s] ?? s;
 String ticketTargetLabel(String t) =>

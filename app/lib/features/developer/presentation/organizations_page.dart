@@ -36,24 +36,37 @@ class OrganizationsPage extends ConsumerWidget {
               subtitle: Text([
                 if (o['vat_number'] != null) 'P.IVA ${o['vat_number']}',
                 if (o['city'] != null) o['city'],
+                if (o['demo_mode'] == true) '🧪 dati di prova attivi',
               ].join(' · ')),
-              trailing: PopupMenuButton<String>(
-                onSelected: (v) {
-                  if (v == 'edit') _edit(context, ref, o);
-                  if (v == 'del') _delete(context, ref, o);
-                  if (v == 'lic') {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => LicensesPage(
-                        companyId: o['id'] as String,
-                        companyName: o['name'] as String?,
-                      ),
-                    ));
-                  }
-                },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'lic', child: Text('Licenze')),
-                  PopupMenuItem(value: 'edit', child: Text('Modifica')),
-                  PopupMenuItem(value: 'del', child: Text('Elimina')),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Tooltip(
+                    message: 'Dati di prova',
+                    child: Switch(
+                      value: o['demo_mode'] == true,
+                      onChanged: (v) => _toggleDemo(context, ref, o, v),
+                    ),
+                  ),
+                  PopupMenuButton<String>(
+                    onSelected: (v) {
+                      if (v == 'edit') _edit(context, ref, o);
+                      if (v == 'del') _delete(context, ref, o);
+                      if (v == 'lic') {
+                        Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => LicensesPage(
+                            companyId: o['id'] as String,
+                            companyName: o['name'] as String?,
+                          ),
+                        ));
+                      }
+                    },
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(value: 'lic', child: Text('Licenze')),
+                      PopupMenuItem(value: 'edit', child: Text('Modifica')),
+                      PopupMenuItem(value: 'del', child: Text('Elimina')),
+                    ],
+                  ),
                 ],
               ),
               onTap: () => _edit(context, ref, o),
@@ -62,6 +75,50 @@ class OrganizationsPage extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _toggleDemo(BuildContext context, WidgetRef ref,
+      Map<String, dynamic> o, bool on) async {
+    if (!on) {
+      // Spegnimento: i dati di prova (e quelli aggiunti durante il test)
+      // vengono eliminati definitivamente.
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Disattivare i dati di prova?'),
+          content: Text(
+              'Tutti i dati di prova di "${o['name']}" e quelli inseriti '
+              'durante il test verranno eliminati DEFINITIVAMENTE, lasciando '
+              'l\'ambiente di produzione pulito.'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Annulla')),
+            FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Disattiva ed elimina')),
+          ],
+        ),
+      );
+      if (ok != true) return;
+    }
+    try {
+      await ref
+          .read(adminRepositoryProvider)
+          .setDemoMode(o['id'] as String, on);
+      ref.invalidate(companiesAdminProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(on
+                ? 'Dati di prova attivati per "${o['name']}".'
+                : 'Dati di prova eliminati per "${o['name']}".')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Errore: $e')));
+      }
+    }
   }
 
   Future<void> _delete(

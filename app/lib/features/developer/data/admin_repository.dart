@@ -72,9 +72,17 @@ class AdminRepository {
   Future<List<Map<String, dynamic>>> listCompanies() async {
     final rows = await _client
         .from('companies')
-        .select('id, name, vat_number, email, city, province')
+        .select('id, name, vat_number, email, city, province, demo_mode')
         .order('name');
     return rows.cast<Map<String, dynamic>>();
+  }
+
+  /// Attiva/disattiva i dati di prova per un'organizzazione (solo super_admin).
+  /// ON: seeda i dati di prova; OFF: li cancella definitivamente (inclusi
+  /// quelli aggiunti durante il test).
+  Future<void> setDemoMode(String companyId, bool on) async {
+    await _client
+        .rpc('set_demo_mode', params: {'p_company': companyId, 'p_on': on});
   }
 
   Future<void> createCompany(Map<String, dynamic> data) async {

@@ -2,18 +2,15 @@
 //  SMARTERP · tickets_page.dart — segnalazioni/ticket (realtime).
 //  Lista che si aggiorna in tempo reale, cambio stato, export Excel.
 // ============================================================
-import 'dart:typed_data';
-
-import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/xlsx.dart';
 import '../../profile/application/profile_providers.dart';
 import '../../profile/domain/profile.dart';
 import '../data/tickets_repository.dart';
 import '../domain/ticket.dart';
+import 'ticket_report_page.dart';
 import 'ticket_thread_page.dart';
 
 class TicketsPage extends ConsumerWidget {
@@ -34,20 +31,32 @@ class TicketsPage extends ConsumerWidget {
             icon: const Icon(Icons.refresh),
             onPressed: () => ref.invalidate(ticketsFutureProvider),
           ),
-          if (canManage)
-            IconButton(
-              tooltip: 'Esporta Excel',
-              icon: const Icon(Icons.table_view_outlined),
-              onPressed: () => _exportExcel(context, ref),
-            ),
+          IconButton(
+            tooltip: 'Report',
+            icon: const Icon(Icons.assessment_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const TicketReportPage())),
+          ),
         ],
       ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Errore: $e')),
-        data: (tickets) {
+        data: (all) {
+          // Lista principale: solo segnalazioni ATTIVE. Le risolte/chiuse/
+          // abbandonate si consultano dalla sezione Report.
+          final tickets = all
+              .where((t) => kTicketActiveStatuses.contains(t.status))
+              .toList();
           if (tickets.isEmpty) {
-            return const Center(child: Text('Nessuna segnalazione.'));
+            return const Center(
+                child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Text(
+                  'Nessuna segnalazione attiva.\n'
+                  'Le segnalazioni risolte, chiuse o abbandonate sono nel Report.',
+                  textAlign: TextAlign.center),
+            ));
           }
           return ListView.separated(
             itemCount: tickets.length,
@@ -60,41 +69,6 @@ class TicketsPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _exportExcel(BuildContext context, WidgetRef ref) async {
-    final tickets = ref.read(ticketsFutureProvider).valueOrNull ?? const [];
-    final df = DateFormat('dd/MM/yyyy HH:mm');
-    final rows = tickets
-        .map((t) => [
-              df.format(t.createdAt.toLocal()),
-              t.companyName ?? '',
-              t.title,
-              ticketStatusLabel(t.status),
-              t.priority,
-              ticketTargetLabel(t.target),
-            ])
-        .toList();
-    final bytes = XlsxBuilder.build(
-      headers: const ['Data', 'Organizzazione', 'Titolo', 'Stato', 'Priorità', 'Destinatario'],
-      rows: rows,
-    );
-    try {
-      await FileSaver.instance.saveFile(
-        name: 'segnalazioni',
-        bytes: Uint8List.fromList(bytes),
-        ext: 'xlsx',
-        mimeType: MimeType.microsoftExcel,
-      );
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Excel esportato.')));
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Errore export: $e')));
-      }
-    }
-  }
 }
 
 class _TicketTile extends ConsumerWidget {
