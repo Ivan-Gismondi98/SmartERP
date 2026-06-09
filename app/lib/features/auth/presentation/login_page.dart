@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/widgets/smart_erp_logo.dart';
 import '../../developer/data/account_requests_repository.dart';
 import '../application/auth_providers.dart';
 
@@ -69,13 +70,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(Icons.business_center_outlined,
-                      size: 64, color: theme.colorScheme.primary),
-                  const SizedBox(height: 12),
-                  Text('SmartERP',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineMedium),
-                  const SizedBox(height: 4),
+                  const Center(child: SmartErpLogo(size: 64)),
+                  const SizedBox(height: 16),
                   Text('Accedi al gestionale',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium),

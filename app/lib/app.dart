@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/impersonation.dart';
 import 'core/theme.dart';
+import 'core/widgets/app_footer.dart';
 import 'features/assistant/presentation/assistant_bar.dart';
 import 'features/profile/application/profile_providers.dart';
 import 'features/diagnostics/presentation/connection_check_page.dart';
@@ -43,11 +44,20 @@ class SmartErpApp extends ConsumerWidget {
       // Assistente IA + bordo "impersonate" sopra OGNI pagina.
       builder: (context, child) {
         final impersonating = ref.watch(impersonationProvider).active;
-        return Stack(
+        // Footer globale sotto ogni pagina (non sovrapposto ai contenuti).
+        return Column(
           children: [
-            Positioned.fill(child: child ?? const SizedBox.shrink()),
-            const Positioned(right: 16, bottom: 96, child: AssistantBar()),
-            if (impersonating) ..._hazardBorder(),
+            Expanded(
+              child: Stack(
+                children: [
+                  Positioned.fill(child: child ?? const SizedBox.shrink()),
+                  const Positioned(
+                      right: 16, bottom: 96, child: AssistantBar()),
+                  if (impersonating) ..._hazardBorder(),
+                ],
+              ),
+            ),
+            const AppFooter(),
           ],
         );
       },

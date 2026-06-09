@@ -11,6 +11,7 @@ import '../../../core/impersonation.dart';
 import '../../../core/licensing.dart';
 import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
+import '../../../core/widgets/smart_erp_logo.dart';
 import '../../developer/presentation/impersonate_dialog.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../profile/application/profile_providers.dart';
@@ -102,7 +103,7 @@ class HomePage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SmartERP'),
+        title: const SmartErpLogo(size: 26),
         actions: [
           if (canTickets)
             IconButton(

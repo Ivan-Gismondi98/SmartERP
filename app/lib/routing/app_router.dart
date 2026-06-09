@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/supabase_providers.dart';
+import '../features/info/presentation/changelog_page.dart';
 import '../features/auth/application/auth_providers.dart';
 import '../features/auth/presentation/login_page.dart';
 import '../features/accounting/presentation/accounting_page.dart';
@@ -54,8 +55,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       final goingToLogin = state.matchedLocation == '/login';
 
       if (!loggedIn) {
-        // Le pagine pubbliche: login e diagnostica.
-        final isPublic = goingToLogin || state.matchedLocation == '/diagnostics';
+        // Le pagine pubbliche: login, diagnostica e changelog.
+        final isPublic = goingToLogin ||
+            state.matchedLocation == '/diagnostics' ||
+            state.matchedLocation == '/changelog';
         return isPublic ? null : '/login';
       }
       // Gia' loggato ma sulla pagina di login -> vai alla home.
@@ -97,6 +100,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/diagnostics',
         builder: (_, __) => const ConnectionCheckPage(),
       ),
+      GoRoute(path: '/changelog', builder: (_, __) => const ChangelogPage()),
     ],
   );
 });
