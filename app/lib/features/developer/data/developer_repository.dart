@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase_providers.dart';
-import '../domain/app_bundle.dart';
 import '../domain/license.dart';
 
 /// Dati aggregati della dashboard.
@@ -56,27 +55,6 @@ class DeveloperRepository {
 
   Future<void> delete(String id) async {
     await _client.from('licenses').delete().eq('id', id);
-  }
-
-  // ----- Bundle (pacchetti) -----
-  Future<List<AppBundle>> listBundles() async {
-    final rows = await _client
-        .from('app_bundles')
-        .select('id, name, description, app_codes, price, period, is_default')
-        .order('name');
-    return rows.map(AppBundle.fromJson).toList();
-  }
-
-  Future<void> createBundle(AppBundle b) async {
-    await _client.from('app_bundles').insert(b.toJson());
-  }
-
-  Future<void> updateBundle(AppBundle b) async {
-    await _client.from('app_bundles').update(b.toJson()).eq('id', b.id);
-  }
-
-  Future<void> deleteBundle(String id) async {
-    await _client.from('app_bundles').delete().eq('id', id);
   }
 
   Future<void> addPayment(
@@ -131,8 +109,11 @@ class DeveloperRepository {
     return DashboardData(
       organizations: companies.length,
       totalPaid: totalPaid,
-      overdueLicenses: licenses.where((l) => l.overdueAt(now)).length,
-      activeLicenses: licenses.where((l) => l.status == 'active').length,
+      overdueLicenses:
+          licenses.where((l) => !l.isDefault && l.overdueAt(now)).length,
+      activeLicenses: licenses
+          .where((l) => !l.isDefault && l.status == 'active')
+          .length,
       bugBySeverity: bugBySeverity,
       ticketsByStatus: ticketsByStatus,
       paidByCompany: paidByCompany,

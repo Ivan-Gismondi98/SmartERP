@@ -9,7 +9,6 @@ import '../../../core/format.dart';
 import '../../errors/domain/error_log.dart';
 import '../application/developer_providers.dart';
 import 'account_requests_page.dart';
-import 'bundles_page.dart';
 import 'licenses_page.dart';
 
 class DevDashboardPage extends ConsumerWidget {
@@ -66,13 +65,7 @@ class DevDashboardPage extends ConsumerWidget {
                   onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => const LicensesPage())),
                   icon: const Icon(Icons.workspace_premium_outlined),
-                  label: const Text('Licenze e pagamenti'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => const BundlesPage())),
-                  icon: const Icon(Icons.widgets_outlined),
-                  label: const Text('Pacchetti di licenze'),
+                  label: const Text('Licenze e pacchetti'),
                 ),
                 OutlinedButton.icon(
                   onPressed: () => Navigator.of(context).push(MaterialPageRoute(

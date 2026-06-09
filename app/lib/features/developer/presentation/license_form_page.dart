@@ -11,11 +11,16 @@ import '../data/developer_repository.dart';
 import '../domain/license.dart';
 
 class LicenseFormPage extends ConsumerStatefulWidget {
-  const LicenseFormPage({super.key, this.license, this.presetCompanyId});
+  const LicenseFormPage(
+      {super.key, this.license, this.presetCompanyId, this.duplicate = false});
   final License? license;
 
   /// Azienda pre-selezionata (quando si crea una licenza da un'organizzazione).
   final String? presetCompanyId;
+
+  /// Se true, [license] è usata solo per PRE-COMPILARE: si crea una NUOVA
+  /// licenza (es. duplicazione di un pacchetto predefinito da assegnare).
+  final bool duplicate;
 
   @override
   ConsumerState<LicenseFormPage> createState() => _LicenseFormPageState();
@@ -38,15 +43,19 @@ class _LicenseFormPageState extends ConsumerState<LicenseFormPage> {
   String? _bundleId;
   List<String> _appCodes = const ['suite'];
 
-  License? get _existing => widget.license;
+  /// In modifica esistente solo se NON è una duplicazione.
+  License? get _existing => widget.duplicate ? null : widget.license;
 
   @override
   void initState() {
     super.initState();
     _companyId = widget.presetCompanyId;
-    final l = _existing;
+    // Prefill dai dati della licenza (sia in modifica che in duplicazione).
+    final l = widget.license;
     if (l != null) {
-      _companyId = l.companyId;
+      // In duplicazione l'organizzazione va RIscelta (i pacchetti predefiniti
+      // non puntano ad alcuna organizzazione).
+      _companyId = widget.duplicate ? widget.presetCompanyId : l.companyId;
       _name.text = l.name;
       _price.text = l.price == 0 ? '' : Fmt.amount(l.price);
       _notes.text = l.notes ?? '';
@@ -122,7 +131,9 @@ class _LicenseFormPageState extends ConsumerState<LicenseFormPage> {
     final orgs = ref.watch(organizationsProvider);
     return Scaffold(
       appBar: AppBar(
-          title: Text(_existing == null ? 'Nuova licenza' : 'Modifica licenza')),
+          title: Text(widget.duplicate
+              ? 'Duplica e assegna licenza'
+              : (_existing == null ? 'Nuova licenza' : 'Modifica licenza'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -163,16 +174,16 @@ class _LicenseFormPageState extends ConsumerState<LicenseFormPage> {
               onChanged: (v) => setState(() => _singleApp = v ?? 'invoices'),
             ),
           if (_kind == 'bundle')
-            ref.watch(bundlesListProvider).when(
+            ref.watch(defaultPackagesProvider).when(
                   loading: () => const LinearProgressIndicator(),
                   error: (e, _) => Text('Errore pacchetti: $e'),
-                  data: (bundles) => DropdownButtonFormField<String>(
+                  data: (packages) => DropdownButtonFormField<String>(
                     initialValue: _bundleId,
                     isExpanded: true,
                     decoration:
                         const InputDecoration(labelText: 'Pacchetto'),
                     items: [
-                      for (final b in bundles)
+                      for (final b in packages)
                         DropdownMenuItem(
                             value: b.id,
                             child: Text(
@@ -180,7 +191,7 @@ class _LicenseFormPageState extends ConsumerState<LicenseFormPage> {
                                 overflow: TextOverflow.ellipsis)),
                     ],
                     onChanged: (v) {
-                      final b = bundles.firstWhere((e) => e.id == v);
+                      final b = packages.firstWhere((e) => e.id == v);
                       setState(() {
                         _bundleId = v;
                         _appCodes = b.appCodes;

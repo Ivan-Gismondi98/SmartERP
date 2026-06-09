@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/format.dart';
+import '../../../core/licensing.dart';
 import '../application/developer_providers.dart';
 import '../data/developer_repository.dart';
 import '../domain/license.dart';
@@ -76,30 +77,21 @@ class _LicensesPageState extends ConsumerState<LicensesPage> {
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (context, i) {
               final l = licenses[i];
+              if (l.isDefault) return _defaultTile(context, l);
               final overdue = l.overdueAt(now);
               final sel = _selected.contains(l.id);
-              // Le licenze predefinite: stella, non selezionabili/eliminabili.
-              final leading = l.isDefault
-                  ? const Tooltip(
-                      message: 'Licenza predefinita (non eliminabile)',
-                      child: SizedBox(
-                        width: 48,
-                        child: Icon(Icons.star, color: Colors.amber),
-                      ),
-                    )
-                  : Checkbox(
-                      value: sel,
-                      onChanged: (v) => setState(() {
-                        if (v == true) {
-                          _selected.add(l.id);
-                        } else {
-                          _selected.remove(l.id);
-                        }
-                      }),
-                    );
               return ListTile(
-                leading: leading,
-                title: Text('${l.companyName ?? l.companyId} · ${l.name}'),
+                leading: Checkbox(
+                  value: sel,
+                  onChanged: (v) => setState(() {
+                    if (v == true) {
+                      _selected.add(l.id);
+                    } else {
+                      _selected.remove(l.id);
+                    }
+                  }),
+                ),
+                title: Text('${l.companyName ?? l.companyId ?? '—'} · ${l.name}'),
                 subtitle: Text(
                     '${Fmt.euro(l.price)}/${l.period} · ${l.status}'
                     '${l.renewalDate != null ? ' · rinnovo ${Fmt.date(l.renewalDate)}' : ''}'
@@ -112,17 +104,14 @@ class _LicensesPageState extends ConsumerState<LicensesPage> {
                           if (v == 'pay') _addPayment(context, l);
                           if (v == 'del') _delete(context, l);
                         },
-                        itemBuilder: (_) => [
-                          const PopupMenuItem(
+                        itemBuilder: (_) => const [
+                          PopupMenuItem(
                               value: 'pay', child: Text('Registra pagamento')),
-                          const PopupMenuItem(
-                              value: 'edit', child: Text('Modifica')),
-                          if (!l.isDefault)
-                            const PopupMenuItem(
-                                value: 'del', child: Text('Elimina')),
+                          PopupMenuItem(value: 'edit', child: Text('Modifica')),
+                          PopupMenuItem(value: 'del', child: Text('Elimina')),
                         ],
                       ),
-                onTap: (hasSel && !l.isDefault)
+                onTap: hasSel
                     ? () => setState(() {
                           if (sel) {
                             _selected.remove(l.id);
@@ -137,6 +126,37 @@ class _LicensesPageState extends ConsumerState<LicensesPage> {
         },
       ),
     );
+  }
+
+  /// Riga di un PACCHETTO PREDEFINITO (licenza is_default, senza org):
+  /// stella, non selezionabile/eliminabile/modificabile, solo "Duplica".
+  Widget _defaultTile(BuildContext context, License l) {
+    return ListTile(
+      leading: const Tooltip(
+        message: 'Pacchetto predefinito (non assegnato, non eliminabile)',
+        child: SizedBox(width: 48, child: Icon(Icons.star, color: Colors.amber)),
+      ),
+      title: Text('${l.name} · ${Fmt.euro(l.price)}/${l.period}'),
+      subtitle: Text('Pacchetto · ${l.appCodes.map(appLabel).join(', ')}'),
+      trailing: FilledButton.tonalIcon(
+        onPressed: () => _duplicate(context, l),
+        icon: const Icon(Icons.copy_all_outlined),
+        label: const Text('Duplica e assegna'),
+      ),
+      onTap: () => _duplicate(context, l),
+    );
+  }
+
+  Future<void> _duplicate(BuildContext context, License l) async {
+    final saved = await Navigator.of(context).push<bool>(MaterialPageRoute(
+        builder: (_) => LicenseFormPage(
+            license: l,
+            duplicate: true,
+            presetCompanyId: widget.companyId)));
+    if (saved == true) {
+      ref.invalidate(licensesListProvider);
+      ref.invalidate(dashboardProvider);
+    }
   }
 
   Future<void> _open(BuildContext context, License? l) async {
@@ -176,7 +196,7 @@ class _LicensesPageState extends ConsumerState<LicensesPage> {
     try {
       await ref
           .read(developerRepositoryProvider)
-          .addPayment(l.id, l.companyId, amount, DateTime.now());
+          .addPayment(l.id, l.companyId!, amount, DateTime.now());
       ref.invalidate(dashboardProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(

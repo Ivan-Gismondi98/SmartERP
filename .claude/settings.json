@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(docker exec smarterp-db psql -U postgres -d postgres -c \"select id, aud, role, email, email_confirmed_at is not null as confirmed, is_super_admin, raw_app_meta_data, raw_user_meta_data from auth.users where email='dev@smarterp.local';\")",
+      "PowerShell(docker exec smarterp-db psql -U postgres -d postgres -c \"select provider, provider_id, user_id from auth.identities where identity_data->>'email'='dev@smarterp.local';\" 2>&1)",
+      "PowerShell(docker exec smarterp-db psql -U postgres -d postgres -c \"select id, name, role from public.profiles p join auth.users u on u.id=p.id where u.email='dev@smarterp.local';\" 2>&1)",
+      "PowerShell(docker exec smarterp-db psql -U postgres -d postgres -c \"select table_name, column_name, data_type from information_schema.columns where table_schema='auth' and table_name in \\('users','identities'\\) and is_nullable='NO' and column_default is null order by table_name, ordinal_position;\")",
+      "PowerShell(docker exec -i smarterp-db psql -U postgres -d postgres)"
+    ]
+  }
+}

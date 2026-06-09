@@ -18,7 +18,6 @@ import '../features/crm/presentation/crm_page.dart';
 import '../features/customers/presentation/customers_page.dart';
 import '../features/documents/presentation/documents_page.dart';
 import '../features/developer/presentation/account_requests_page.dart';
-import '../features/developer/presentation/bundles_page.dart';
 import '../features/developer/presentation/dev_dashboard_page.dart';
 import '../features/developer/presentation/licenses_page.dart';
 import '../features/developer/presentation/organizations_page.dart';
@@ -73,7 +72,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/studio', builder: (_, __) => const StudioPage()),
       GoRoute(path: '/errors', builder: (_, __) => const ErrorLogsPage()),
       GoRoute(path: '/dev', builder: (_, __) => const DevDashboardPage()),
-      GoRoute(path: '/bundles', builder: (_, __) => const BundlesPage()),
       GoRoute(path: '/licenses', builder: (_, __) => const LicensesPage()),
       GoRoute(path: '/account-requests',
           builder: (_, __) => const AccountRequestsPage()),

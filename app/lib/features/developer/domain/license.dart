@@ -4,7 +4,7 @@
 class License {
   const License({
     required this.id,
-    required this.companyId,
+    this.companyId,
     this.companyName,
     required this.name,
     this.status = 'active',
@@ -18,7 +18,10 @@ class License {
   });
 
   final String id;
-  final String companyId;
+
+  /// Organizzazione assegnataria. NULL per le licenze predefinite (pacchetti
+  /// di catalogo non assegnati ad alcuna organizzazione).
+  final String? companyId;
   final String? companyName;
   final String name;
   final String status; // active | suspended | expired
@@ -41,7 +44,7 @@ class License {
 
   factory License.fromJson(Map<String, dynamic> j) => License(
         id: j['id'] as String,
-        companyId: j['company_id'] as String,
+        companyId: j['company_id'] as String?,
         companyName: (j['companies'] as Map?)?['name'] as String?,
         name: j['name'] as String,
         status: (j['status'] as String?) ?? 'active',
