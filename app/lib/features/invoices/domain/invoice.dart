@@ -152,6 +152,9 @@ class Invoice {
     this.sdiStatus = 'not_sent',
     this.sdiSentAt,
     this.templateId,
+    this.storedSubtotal,
+    this.storedTax,
+    this.storedTotal,
     List<InvoiceItem>? items,
   })  : issueDate = issueDate ?? DateTime.now(),
         items = items ?? [];
@@ -180,6 +183,11 @@ class Invoice {
   DateTime? sdiSentAt;
   String? templateId;
   List<InvoiceItem> items;
+
+  /// Totali salvati in tabella (usati nelle viste elenco senza righe).
+  final double? storedSubtotal;
+  final double? storedTax;
+  final double? storedTotal;
 
   /// Etichetta leggibile dello stato di trasmissione SdI.
   String get sdiStatusLabel {
@@ -252,16 +260,20 @@ class Invoice {
     return lines;
   }
 
-  /// Imponibile totale.
-  double get subtotal =>
-      round2(vatSummary.fold<double>(0, (s, l) => s + l.taxable));
+  /// Imponibile totale. Senza righe (es. vista elenco) usa il valore salvato.
+  double get subtotal => items.isEmpty
+      ? (storedSubtotal ?? 0)
+      : round2(vatSummary.fold<double>(0, (s, l) => s + l.taxable));
 
   /// IVA totale.
-  double get taxAmount =>
-      round2(vatSummary.fold<double>(0, (s, l) => s + l.tax));
+  double get taxAmount => items.isEmpty
+      ? (storedTax ?? 0)
+      : round2(vatSummary.fold<double>(0, (s, l) => s + l.tax));
 
   /// Totale documento (imponibile + IVA + bollo + arrotondamento).
-  double get total => round2(subtotal + taxAmount + stampDuty + rounding);
+  double get total => items.isEmpty
+      ? (storedTotal ?? 0)
+      : round2(subtotal + taxAmount + stampDuty + rounding);
 
   /// Bollo dovuto: € 2,00 se l'imponibile non soggetto a IVA supera € 77,47.
   bool get stampDutyDue {
@@ -307,6 +319,9 @@ class Invoice {
           ? null
           : DateTime.tryParse(j['sdi_sent_at'] as String),
       templateId: j['template_id'] as String?,
+      storedSubtotal: (j['subtotal'] as num?)?.toDouble(),
+      storedTax: (j['tax_amount'] as num?)?.toDouble(),
+      storedTotal: (j['total'] as num?)?.toDouble(),
       items: items,
     );
   }

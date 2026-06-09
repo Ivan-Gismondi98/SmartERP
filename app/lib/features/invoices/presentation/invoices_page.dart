@@ -8,7 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/format.dart';
 import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
+import '../../../core/reporting/entity_report_page.dart';
+import '../application/invoices_import_export.dart';
 import '../application/invoices_providers.dart';
+import '../application/invoices_report.dart';
 import '../domain/invoice.dart';
 import 'invoice_detail_page.dart';
 import 'invoice_form_page.dart';
@@ -31,7 +34,25 @@ class _InvoicesPageState extends ConsumerState<InvoicesPage> {
     final now = DateTime.now();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Fatture')),
+      appBar: AppBar(
+        title: const Text('Fatture'),
+        actions: [
+          IconButton(
+            tooltip: 'Report / Export',
+            icon: const Icon(Icons.assessment_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) =>
+                    EntityReportPage<Invoice>(spec: invoicesReportSpec))),
+          ),
+          IconButton(
+            tooltip: 'Importa / Esporta righe',
+            icon: const Icon(Icons.import_export),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) =>
+                    EntityReportPage<InvoiceLineRow>(spec: invoicesLinesSpec))),
+          ),
+        ],
+      ),
       floatingActionButton: canCreate
           ? FloatingActionButton.extended(
               onPressed: () => _openEditor(null),

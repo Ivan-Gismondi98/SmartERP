@@ -8,10 +8,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/format.dart';
 import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
+import '../../../core/reporting/entity_report_page.dart';
 import '../../profile/application/profile_providers.dart';
+import '../application/accounting_import_export.dart';
 import '../application/accounting_providers.dart';
+import '../application/accounting_report.dart';
 import '../data/accounting_repository.dart';
 import '../domain/account.dart';
+import '../domain/journal_entry.dart';
 import 'account_ledger_page.dart';
 import 'cost_centers_page.dart';
 import 'journal_entry_form_page.dart';
@@ -49,6 +53,20 @@ class _AccountingPageState extends ConsumerState<AccountingPage>
       appBar: AppBar(
         title: const Text('Contabilità'),
         actions: [
+          IconButton(
+            tooltip: 'Report / Export prima nota',
+            icon: const Icon(Icons.assessment_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) =>
+                    EntityReportPage<JournalEntry>(spec: accountingReportSpec))),
+          ),
+          IconButton(
+            tooltip: 'Importa / Esporta prima nota (righe)',
+            icon: const Icon(Icons.import_export),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => EntityReportPage<JournalLineRow>(
+                    spec: accountingLinesSpec))),
+          ),
           if (canManage)
             IconButton(
               tooltip: 'Centri di costo',

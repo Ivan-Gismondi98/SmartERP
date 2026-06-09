@@ -8,7 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/format.dart';
 import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
+import '../../../core/reporting/entity_report_page.dart';
 import '../application/crm_providers.dart';
+import '../application/crm_report.dart';
 import '../domain/opportunity.dart';
 import 'crm_detail_page.dart';
 import 'crm_form_page.dart';
@@ -29,7 +31,18 @@ class _CrmPageState extends ConsumerState<CrmPage> {
     final listAsync = ref.watch(opportunitiesListProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('CRM')),
+      appBar: AppBar(
+        title: const Text('CRM'),
+        actions: [
+          IconButton(
+            tooltip: 'Report / Export',
+            icon: const Icon(Icons.assessment_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) =>
+                    EntityReportPage<Opportunity>(spec: crmReportSpec))),
+          ),
+        ],
+      ),
       floatingActionButton: canCreate
           ? FloatingActionButton.extended(
               onPressed: () => _openEditor(null),

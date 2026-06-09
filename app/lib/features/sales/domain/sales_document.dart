@@ -141,6 +141,9 @@ class SalesDocument {
     this.numberingSeq,
     this.convertedInvoiceId,
     this.templateId,
+    this.storedSubtotal,
+    this.storedTax,
+    this.storedTotal,
     List<SalesItem>? items,
   })  : issueDate = issueDate ?? DateTime.now(),
         items = items ?? [];
@@ -165,6 +168,11 @@ class SalesDocument {
   String? convertedInvoiceId;
   String? templateId;
   List<SalesItem> items;
+
+  /// Totali salvati (usati nelle viste elenco senza righe).
+  final double? storedSubtotal;
+  final double? storedTax;
+  final double? storedTotal;
 
   bool get isDraft => status == SalesStatus.draft;
   bool get isConverted => status == SalesStatus.converted;
@@ -201,13 +209,17 @@ class SalesDocument {
     return lines;
   }
 
-  double get subtotal =>
-      round2(vatSummary.fold<double>(0, (s, l) => s + l.taxable));
+  double get subtotal => items.isEmpty
+      ? (storedSubtotal ?? 0)
+      : round2(vatSummary.fold<double>(0, (s, l) => s + l.taxable));
 
-  double get taxAmount =>
-      round2(vatSummary.fold<double>(0, (s, l) => s + l.tax));
+  double get taxAmount => items.isEmpty
+      ? (storedTax ?? 0)
+      : round2(vatSummary.fold<double>(0, (s, l) => s + l.tax));
 
-  double get total => round2(subtotal + taxAmount + stampDuty + rounding);
+  double get total => items.isEmpty
+      ? (storedTotal ?? 0)
+      : round2(subtotal + taxAmount + stampDuty + rounding);
 
   factory SalesDocument.fromJson(Map<String, dynamic> j) {
     final itemsJson = (j['sales_document_items'] as List?) ?? const [];
@@ -239,6 +251,9 @@ class SalesDocument {
       numberingSeq: (j['numbering_seq'] as num?)?.toInt(),
       convertedInvoiceId: j['converted_invoice_id'] as String?,
       templateId: j['template_id'] as String?,
+      storedSubtotal: (j['subtotal'] as num?)?.toDouble(),
+      storedTax: (j['tax_amount'] as num?)?.toDouble(),
+      storedTotal: (j['total'] as num?)?.toDouble(),
       items: items,
     );
   }

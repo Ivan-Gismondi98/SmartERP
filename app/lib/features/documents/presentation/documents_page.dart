@@ -10,8 +10,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
+import '../../../core/reporting/entity_report_page.dart';
 import '../../profile/application/profile_providers.dart';
 import '../application/documents_providers.dart';
+import '../application/documents_report.dart';
 import '../data/documents_repository.dart';
 import '../domain/document_file.dart';
 
@@ -35,7 +37,18 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
     final listAsync = ref.watch(documentsListProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Documenti')),
+      appBar: AppBar(
+        title: const Text('Documenti'),
+        actions: [
+          IconButton(
+            tooltip: 'Report / Export',
+            icon: const Icon(Icons.assessment_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) =>
+                    EntityReportPage<DocumentFile>(spec: documentsReportSpec))),
+          ),
+        ],
+      ),
       floatingActionButton: canCreate
           ? FloatingActionButton.extended(
               onPressed: _uploading ? null : _pickAndUpload,

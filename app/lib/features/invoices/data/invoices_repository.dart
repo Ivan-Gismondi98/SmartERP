@@ -31,6 +31,20 @@ class InvoicesRepository {
     return rows.map(Invoice.fromJson).toList();
   }
 
+  /// Elenco fatture CON righe (per export/report riga-livello).
+  Future<List<Invoice>> listDetailed(String companyId) async {
+    final rows = await _client
+        .from('invoices')
+        .select('$_invoiceSelect, invoice_items ( id, position, product_id, '
+            'description, quantity, unit_price, vat_rate, vat_nature, '
+            'discount_percent, line_total, '
+            'products ( name, image_url, show_in_documents ) )')
+        .eq('company_id', companyId)
+        .order('issue_date', ascending: false)
+        .order('numbering_seq', ascending: false, nullsFirst: true);
+    return rows.map(Invoice.fromJson).toList();
+  }
+
   Future<Invoice> getById(String id) async {
     final row = await _client
         .from('invoices')

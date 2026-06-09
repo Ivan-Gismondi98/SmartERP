@@ -8,7 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/format.dart';
 import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
+import '../../../core/reporting/entity_report_page.dart';
 import '../application/maintenance_providers.dart';
+import '../application/maintenance_report.dart';
 import '../domain/equipment.dart';
 import '../domain/maintenance_request.dart';
 import 'equipment_form_dialog.dart';
@@ -47,6 +49,24 @@ class _MaintenancePageState extends ConsumerState<MaintenancePage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manutenzione'),
+        actions: [
+          PopupMenuButton<String>(
+            tooltip: 'Report / Export',
+            icon: const Icon(Icons.assessment_outlined),
+            onSelected: (v) {
+              final page = v == 'equip'
+                  ? EntityReportPage<Equipment>(spec: equipmentReportSpec)
+                  : EntityReportPage<MaintenanceRequest>(
+                      spec: maintenanceRequestsReportSpec);
+              Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (_) => page));
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'req', child: Text('Report richieste')),
+              PopupMenuItem(value: 'equip', child: Text('Report attrezzature')),
+            ],
+          ),
+        ],
         bottom: TabBar(
           controller: _tab,
           tabs: const [

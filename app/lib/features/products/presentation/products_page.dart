@@ -7,7 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/format.dart';
 import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
+import '../../../core/reporting/entity_report_page.dart';
 import '../application/products_providers.dart';
+import '../application/products_report.dart';
 import '../data/products_repository.dart';
 import '../domain/product.dart';
 import 'product_form_page.dart';
@@ -31,7 +33,18 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
     final listAsync = ref.watch(productsListProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Magazzino / Prodotti')),
+      appBar: AppBar(
+        title: const Text('Magazzino / Prodotti'),
+        actions: [
+          IconButton(
+            tooltip: 'Report / Import-Export',
+            icon: const Icon(Icons.assessment_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) =>
+                    EntityReportPage<Product>(spec: productsReportSpec))),
+          ),
+        ],
+      ),
       floatingActionButton: canCreate
           ? FloatingActionButton.extended(
               onPressed: () => _openForm(null),

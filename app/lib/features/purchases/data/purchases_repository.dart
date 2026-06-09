@@ -28,6 +28,19 @@ class PurchasesRepository {
     return rows.map(PurchaseDocument.fromJson).toList();
   }
 
+  /// Elenco documenti CON righe (per export/import riga-livello).
+  Future<List<PurchaseDocument>> listDetailed(String companyId) async {
+    final rows = await _client
+        .from('purchase_documents')
+        .select('$_docSelect, purchase_document_items ( id, position, product_id, '
+            'description, quantity, unit_price, vat_rate, vat_nature, '
+            'discount_percent, line_total )')
+        .eq('company_id', companyId)
+        .order('issue_date', ascending: false)
+        .order('numbering_seq', ascending: false, nullsFirst: true);
+    return rows.map(PurchaseDocument.fromJson).toList();
+  }
+
   Future<PurchaseDocument> getById(String id) async {
     final row = await _client
         .from('purchase_documents')

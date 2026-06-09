@@ -128,6 +128,9 @@ class PurchaseDocument {
     this.notes,
     this.numberingYear,
     this.numberingSeq,
+    this.storedSubtotal,
+    this.storedTax,
+    this.storedTotal,
     List<PurchaseItem>? items,
   })  : issueDate = issueDate ?? DateTime.now(),
         items = items ?? [];
@@ -148,6 +151,11 @@ class PurchaseDocument {
   int? numberingYear;
   int? numberingSeq;
   List<PurchaseItem> items;
+
+  /// Totali salvati (usati nelle viste elenco senza righe).
+  final double? storedSubtotal;
+  final double? storedTax;
+  final double? storedTotal;
 
   bool get isDraft => status == PurchaseStatus.draft;
   String get displayNumber => docNumber ?? 'BOZZA';
@@ -173,11 +181,15 @@ class PurchaseDocument {
     return lines;
   }
 
-  double get subtotal =>
-      round2(vatSummary.fold<double>(0, (s, l) => s + l.taxable));
-  double get taxAmount =>
-      round2(vatSummary.fold<double>(0, (s, l) => s + l.tax));
-  double get total => round2(subtotal + taxAmount + rounding);
+  double get subtotal => items.isEmpty
+      ? (storedSubtotal ?? 0)
+      : round2(vatSummary.fold<double>(0, (s, l) => s + l.taxable));
+  double get taxAmount => items.isEmpty
+      ? (storedTax ?? 0)
+      : round2(vatSummary.fold<double>(0, (s, l) => s + l.tax));
+  double get total => items.isEmpty
+      ? (storedTotal ?? 0)
+      : round2(subtotal + taxAmount + rounding);
 
   factory PurchaseDocument.fromJson(Map<String, dynamic> j) {
     final itemsJson = (j['purchase_document_items'] as List?) ?? const [];
@@ -205,6 +217,9 @@ class PurchaseDocument {
       notes: j['notes'] as String?,
       numberingYear: (j['numbering_year'] as num?)?.toInt(),
       numberingSeq: (j['numbering_seq'] as num?)?.toInt(),
+      storedSubtotal: (j['subtotal'] as num?)?.toDouble(),
+      storedTax: (j['tax_amount'] as num?)?.toDouble(),
+      storedTotal: (j['total'] as num?)?.toDouble(),
       items: items,
     );
   }

@@ -8,7 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/format.dart';
 import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
+import '../../../core/reporting/entity_report_page.dart';
+import '../application/purchases_import_export.dart';
 import '../application/purchases_providers.dart';
+import '../application/purchases_report.dart';
 import '../domain/purchase_document.dart';
 import 'purchase_detail_page.dart';
 import 'purchase_form_page.dart';
@@ -31,7 +34,25 @@ class _PurchasesPageState extends ConsumerState<PurchasesPage> {
     final listAsync = ref.watch(purchasesListProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Acquisti')),
+      appBar: AppBar(
+        title: const Text('Acquisti'),
+        actions: [
+          IconButton(
+            tooltip: 'Report / Export',
+            icon: const Icon(Icons.assessment_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => EntityReportPage<PurchaseDocument>(
+                    spec: purchasesReportSpec))),
+          ),
+          IconButton(
+            tooltip: 'Importa / Esporta righe',
+            icon: const Icon(Icons.import_export),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => EntityReportPage<PurchaseLineRow>(
+                    spec: purchasesLinesSpec))),
+          ),
+        ],
+      ),
       floatingActionButton: canCreate
           ? FloatingActionButton.extended(
               onPressed: () => _openEditor(null),

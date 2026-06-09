@@ -7,7 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/format.dart';
 import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
+import '../../../core/reporting/entity_report_page.dart';
 import '../application/projects_providers.dart';
+import '../application/projects_report.dart';
 import '../domain/project.dart';
 import 'project_detail_page.dart';
 import 'project_form_page.dart';
@@ -29,7 +31,18 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
     final now = DateTime.now();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Progetti')),
+      appBar: AppBar(
+        title: const Text('Progetti'),
+        actions: [
+          IconButton(
+            tooltip: 'Report / Export',
+            icon: const Icon(Icons.assessment_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) =>
+                    EntityReportPage<Project>(spec: projectsReportSpec))),
+          ),
+        ],
+      ),
       floatingActionButton: canCreate
           ? FloatingActionButton.extended(
               onPressed: () => _openEditor(null),

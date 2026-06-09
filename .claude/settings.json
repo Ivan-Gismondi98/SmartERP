@@ -10,7 +10,12 @@
       "PowerShell(docker exec smarterp-db psql -U postgres -d postgres -c \"select u.email, p.role, p.company_id from public.profiles p join auth.users u on u.id=p.id order by p.role;\")",
       "PowerShell(docker exec smarterp-db psql -U postgres -d postgres -c \"select table_name from information_schema.columns where table_schema='public' and column_name='company_id' order by table_name;\")",
       "PowerShell(docker exec smarterp-db psql -U postgres -d postgres -c \"select tc.table_name, rc.delete_rule from information_schema.referential_constraints rc join information_schema.table_constraints tc on tc.constraint_name=rc.constraint_name where tc.table_schema='public' and tc.table_name in \\('invoice_items','inventory','bom_components'\\) order by tc.table_name;\")",
-      "PowerShell(flutter analyze app/lib/features/tickets 2>&1)"
+      "PowerShell(flutter analyze app/lib/features/tickets 2>&1)",
+      "PowerShell(flutter analyze app/lib/core/reporting app/lib/features/customers app/lib/features/products app/lib/features/suppliers 2>&1)",
+      "PowerShell(flutter analyze app/lib/features/invoices 2>&1)",
+      "PowerShell(flutter analyze app/lib/features/purchases 2>&1)",
+      "PowerShell(flutter analyze app/lib/features/accounting 2>&1)",
+      "PowerShell(flutter analyze app/lib/features/crm app/lib/features/production app/lib/features/maintenance app/lib/features/projects 2>&1)"
     ]
   }
 }

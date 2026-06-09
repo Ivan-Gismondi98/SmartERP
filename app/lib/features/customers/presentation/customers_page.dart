@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
+import '../../../core/reporting/entity_report_page.dart';
 import '../application/customers_providers.dart';
+import '../application/customers_report.dart';
 import '../data/customers_repository.dart';
 import '../domain/customer.dart';
 import 'customer_form_page.dart';
@@ -29,7 +31,18 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
     final listAsync = ref.watch(customersListProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Clienti')),
+      appBar: AppBar(
+        title: const Text('Clienti'),
+        actions: [
+          IconButton(
+            tooltip: 'Report / Import-Export',
+            icon: const Icon(Icons.assessment_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) =>
+                    EntityReportPage<Customer>(spec: customersReportSpec))),
+          ),
+        ],
+      ),
       floatingActionButton: canCreate
           ? FloatingActionButton.extended(
               onPressed: () => _openForm(context, ref, null),

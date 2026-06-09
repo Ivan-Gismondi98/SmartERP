@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
+import '../../../core/reporting/entity_report_page.dart';
 import '../../profile/application/profile_providers.dart';
+import '../application/suppliers_report.dart';
 import '../data/suppliers_repository.dart';
 import '../domain/supplier.dart';
 
@@ -28,7 +30,18 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
     final listAsync = ref.watch(suppliersListProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Fornitori')),
+      appBar: AppBar(
+        title: const Text('Fornitori'),
+        actions: [
+          IconButton(
+            tooltip: 'Report / Import-Export',
+            icon: const Icon(Icons.assessment_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) =>
+                    EntityReportPage<Supplier>(spec: suppliersReportSpec))),
+          ),
+        ],
+      ),
       floatingActionButton: canCreate
           ? FloatingActionButton.extended(
               onPressed: () => _edit(context, null),

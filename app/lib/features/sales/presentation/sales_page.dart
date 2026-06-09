@@ -8,7 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/format.dart';
 import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
+import '../../../core/reporting/entity_report_page.dart';
+import '../application/sales_import_export.dart';
 import '../application/sales_providers.dart';
+import '../application/sales_report.dart';
 import '../domain/sales_document.dart';
 import 'sales_detail_page.dart';
 import 'sales_form_page.dart';
@@ -32,7 +35,25 @@ class _SalesPageState extends ConsumerState<SalesPage> {
     final now = DateTime.now();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Vendite')),
+      appBar: AppBar(
+        title: const Text('Vendite'),
+        actions: [
+          IconButton(
+            tooltip: 'Report / Export',
+            icon: const Icon(Icons.assessment_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) =>
+                    EntityReportPage<SalesDocument>(spec: salesReportSpec))),
+          ),
+          IconButton(
+            tooltip: 'Importa / Esporta righe',
+            icon: const Icon(Icons.import_export),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) =>
+                    EntityReportPage<SalesLineRow>(spec: salesLinesSpec))),
+          ),
+        ],
+      ),
       floatingActionButton: canCreate
           ? FloatingActionButton.extended(
               onPressed: () => _openEditor(null),

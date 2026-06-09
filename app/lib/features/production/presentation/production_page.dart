@@ -8,8 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/format.dart';
 import '../../../core/permissions/permission_codes.dart';
 import '../../../core/permissions/permissions_providers.dart';
+import '../../../core/reporting/entity_report_page.dart';
 import '../../products/application/products_providers.dart';
 import '../application/production_providers.dart';
+import '../application/production_report.dart';
 import '../domain/production_order.dart';
 import 'bom_editor_page.dart';
 import 'production_order_detail_page.dart';
@@ -46,6 +48,15 @@ class _ProductionPageState extends ConsumerState<ProductionPage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Produzione'),
+        actions: [
+          IconButton(
+            tooltip: 'Report / Export',
+            icon: const Icon(Icons.assessment_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => EntityReportPage<ProductionOrder>(
+                    spec: productionReportSpec))),
+          ),
+        ],
         bottom: TabBar(
           controller: _tab,
           tabs: const [
