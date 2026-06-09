@@ -37,6 +37,11 @@ class Perm {
   static const salesIssue = 'sales.issue';
   static const salesConvert = 'sales.convert';
 
+  static const crmView = 'crm.view';
+  static const crmCreate = 'crm.create';
+  static const crmEdit = 'crm.edit';
+  static const crmDelete = 'crm.delete';
+
   static const chatView = 'chat.view';
   static const chatSend = 'chat.send';
   static const chatManage = 'chat.manage';
