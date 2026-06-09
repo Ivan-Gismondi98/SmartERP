@@ -36,7 +36,7 @@ class DeveloperRepository {
 
   static const _licSelect =
       'id, company_id, name, status, price, period, start_date, renewal_date, '
-      'notes, app_code, app_codes, companies ( name )';
+      'notes, app_code, app_codes, is_default, companies ( name )';
 
   Future<List<License>> listLicenses() async {
     final rows = await _client

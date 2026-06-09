@@ -78,17 +78,27 @@ class _LicensesPageState extends ConsumerState<LicensesPage> {
               final l = licenses[i];
               final overdue = l.overdueAt(now);
               final sel = _selected.contains(l.id);
+              // Le licenze predefinite: stella, non selezionabili/eliminabili.
+              final leading = l.isDefault
+                  ? const Tooltip(
+                      message: 'Licenza predefinita (non eliminabile)',
+                      child: SizedBox(
+                        width: 48,
+                        child: Icon(Icons.star, color: Colors.amber),
+                      ),
+                    )
+                  : Checkbox(
+                      value: sel,
+                      onChanged: (v) => setState(() {
+                        if (v == true) {
+                          _selected.add(l.id);
+                        } else {
+                          _selected.remove(l.id);
+                        }
+                      }),
+                    );
               return ListTile(
-                leading: Checkbox(
-                  value: sel,
-                  onChanged: (v) => setState(() {
-                    if (v == true) {
-                      _selected.add(l.id);
-                    } else {
-                      _selected.remove(l.id);
-                    }
-                  }),
-                ),
+                leading: leading,
                 title: Text('${l.companyName ?? l.companyId} · ${l.name}'),
                 subtitle: Text(
                     '${Fmt.euro(l.price)}/${l.period} · ${l.status}'
@@ -102,14 +112,17 @@ class _LicensesPageState extends ConsumerState<LicensesPage> {
                           if (v == 'pay') _addPayment(context, l);
                           if (v == 'del') _delete(context, l);
                         },
-                        itemBuilder: (_) => const [
-                          PopupMenuItem(
+                        itemBuilder: (_) => [
+                          const PopupMenuItem(
                               value: 'pay', child: Text('Registra pagamento')),
-                          PopupMenuItem(value: 'edit', child: Text('Modifica')),
-                          PopupMenuItem(value: 'del', child: Text('Elimina')),
+                          const PopupMenuItem(
+                              value: 'edit', child: Text('Modifica')),
+                          if (!l.isDefault)
+                            const PopupMenuItem(
+                                value: 'del', child: Text('Elimina')),
                         ],
                       ),
-                onTap: hasSel
+                onTap: (hasSel && !l.isDefault)
                     ? () => setState(() {
                           if (sel) {
                             _selected.remove(l.id);

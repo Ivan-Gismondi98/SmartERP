@@ -14,6 +14,7 @@ class License {
     this.renewalDate,
     this.notes,
     this.appCodes = const ['suite'],
+    this.isDefault = false,
   });
 
   final String id;
@@ -29,6 +30,9 @@ class License {
 
   /// App abilitate da questa licenza ('suite' = tutte).
   final List<String> appCodes;
+
+  /// Licenza predefinita (seedata dal sistema): protetta, non selezionabile.
+  final bool isDefault;
 
   bool overdueAt(DateTime now) =>
       status == 'active' &&
@@ -54,6 +58,7 @@ class License {
                 ?.map((e) => e as String)
                 .toList()) ??
             [if (j['app_code'] != null) j['app_code'] as String else 'suite'],
+        isDefault: (j['is_default'] as bool?) ?? false,
       );
 
   Map<String, dynamic> toJson() => {
