@@ -45,6 +45,8 @@ const _modules = <_Module>[
       route: '/sales', requiredPermission: Perm.salesView, app: 'invoices'),
   _Module('Fatture', Icons.receipt_long_outlined,
       route: '/invoices', requiredPermission: Perm.invoicesView, app: 'invoices'),
+  _Module('Contabilità', Icons.account_balance_outlined,
+      route: '/accounting', requiredPermission: Perm.accountingView, app: 'accounting'),
   _Module('Clienti', Icons.people_alt_outlined,
       route: '/customers', requiredPermission: Perm.customersView, app: 'customers'),
   _Module('Magazzino', Icons.inventory_2_outlined,

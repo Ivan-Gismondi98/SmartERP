@@ -42,6 +42,12 @@ class Perm {
   static const crmEdit = 'crm.edit';
   static const crmDelete = 'crm.delete';
 
+  static const accountingView = 'accounting.view';
+  static const accountingCreate = 'accounting.create';
+  static const accountingEdit = 'accounting.edit';
+  static const accountingDelete = 'accounting.delete';
+  static const accountingManage = 'accounting.manage';
+
   static const chatView = 'chat.view';
   static const chatSend = 'chat.send';
   static const chatManage = 'chat.manage';

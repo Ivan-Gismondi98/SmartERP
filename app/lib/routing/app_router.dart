@@ -12,6 +12,7 @@ import 'package:go_router/go_router.dart';
 import '../core/supabase_providers.dart';
 import '../features/auth/application/auth_providers.dart';
 import '../features/auth/presentation/login_page.dart';
+import '../features/accounting/presentation/accounting_page.dart';
 import '../features/chat/presentation/chat_rooms_page.dart';
 import '../features/crm/presentation/crm_page.dart';
 import '../features/customers/presentation/customers_page.dart';
@@ -73,6 +74,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/suppliers', builder: (_, __) => const SuppliersPage()),
       GoRoute(path: '/sales', builder: (_, __) => const SalesPage()),
       GoRoute(path: '/crm', builder: (_, __) => const CrmPage()),
+      GoRoute(path: '/accounting', builder: (_, __) => const AccountingPage()),
       GoRoute(path: '/support', builder: (_, __) => const SupportPage()),
       GoRoute(path: '/users', builder: (_, __) => const UsersPage()),
       GoRoute(path: '/orgs', builder: (_, __) => const OrganizationsPage()),
