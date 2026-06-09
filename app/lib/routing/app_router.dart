@@ -16,6 +16,7 @@ import '../features/accounting/presentation/accounting_page.dart';
 import '../features/chat/presentation/chat_rooms_page.dart';
 import '../features/crm/presentation/crm_page.dart';
 import '../features/customers/presentation/customers_page.dart';
+import '../features/documents/presentation/documents_page.dart';
 import '../features/developer/presentation/account_requests_page.dart';
 import '../features/developer/presentation/bundles_page.dart';
 import '../features/developer/presentation/dev_dashboard_page.dart';
@@ -75,6 +76,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/sales', builder: (_, __) => const SalesPage()),
       GoRoute(path: '/crm', builder: (_, __) => const CrmPage()),
       GoRoute(path: '/accounting', builder: (_, __) => const AccountingPage()),
+      GoRoute(path: '/documents', builder: (_, __) => const DocumentsPage()),
       GoRoute(path: '/support', builder: (_, __) => const SupportPage()),
       GoRoute(path: '/users', builder: (_, __) => const UsersPage()),
       GoRoute(path: '/orgs', builder: (_, __) => const OrganizationsPage()),

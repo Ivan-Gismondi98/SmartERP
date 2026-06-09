@@ -48,6 +48,11 @@ class Perm {
   static const accountingDelete = 'accounting.delete';
   static const accountingManage = 'accounting.manage';
 
+  static const documentsView = 'documents.view';
+  static const documentsCreate = 'documents.create';
+  static const documentsEdit = 'documents.edit';
+  static const documentsDelete = 'documents.delete';
+
   static const chatView = 'chat.view';
   static const chatSend = 'chat.send';
   static const chatManage = 'chat.manage';
