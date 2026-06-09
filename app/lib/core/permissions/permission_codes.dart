@@ -30,6 +30,13 @@ class Perm {
   static const suppliersEdit = 'suppliers.edit';
   static const suppliersDelete = 'suppliers.delete';
 
+  static const salesView = 'sales.view';
+  static const salesCreate = 'sales.create';
+  static const salesEdit = 'sales.edit';
+  static const salesDelete = 'sales.delete';
+  static const salesIssue = 'sales.issue';
+  static const salesConvert = 'sales.convert';
+
   static const chatView = 'chat.view';
   static const chatSend = 'chat.send';
   static const chatManage = 'chat.manage';

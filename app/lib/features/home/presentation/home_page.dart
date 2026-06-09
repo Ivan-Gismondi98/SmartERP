@@ -39,6 +39,8 @@ class _Module {
 }
 
 const _modules = <_Module>[
+  _Module('Vendite', Icons.request_quote_outlined,
+      route: '/sales', requiredPermission: Perm.salesView, app: 'invoices'),
   _Module('Fatture', Icons.receipt_long_outlined,
       route: '/invoices', requiredPermission: Perm.invoicesView, app: 'invoices'),
   _Module('Clienti', Icons.people_alt_outlined,
