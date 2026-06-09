@@ -53,6 +53,13 @@ class Perm {
   static const documentsEdit = 'documents.edit';
   static const documentsDelete = 'documents.delete';
 
+  static const productionView = 'production.view';
+  static const productionCreate = 'production.create';
+  static const productionEdit = 'production.edit';
+  static const productionDelete = 'production.delete';
+  static const productionExecute = 'production.execute';
+  static const productionBom = 'production.bom';
+
   static const chatView = 'chat.view';
   static const chatSend = 'chat.send';
   static const chatManage = 'chat.manage';
