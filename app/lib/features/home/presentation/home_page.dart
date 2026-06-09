@@ -53,6 +53,8 @@ const _modules = <_Module>[
       route: '/products', requiredPermission: Perm.productsView, app: 'products'),
   _Module('Produzione', Icons.precision_manufacturing_outlined,
       route: '/production', requiredPermission: Perm.productionView, app: 'production'),
+  _Module('Manutenzione', Icons.build_outlined,
+      route: '/maintenance', requiredPermission: Perm.maintenanceView, app: 'maintenance'),
   _Module('Prodotti', Icons.sell_outlined,
       route: '/products', requiredPermission: Perm.productsView, app: 'products'),
   _Module('Fornitori', Icons.local_shipping_outlined,
