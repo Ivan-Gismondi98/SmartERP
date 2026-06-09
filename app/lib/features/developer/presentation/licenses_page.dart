@@ -1,5 +1,6 @@
 // ============================================================
 //  SMARTERP · licenses_page.dart — gestione licenze e pagamenti (dev).
+//  Selezione multipla per eliminazione in blocco.
 // ============================================================
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,7 +11,7 @@ import '../data/developer_repository.dart';
 import '../domain/license.dart';
 import 'license_form_page.dart';
 
-class LicensesPage extends ConsumerWidget {
+class LicensesPage extends ConsumerStatefulWidget {
   const LicensesPage({super.key, this.companyId, this.companyName});
 
   /// Se valorizzato, mostra solo le licenze di quell'organizzazione.
@@ -18,25 +19,55 @@ class LicensesPage extends ConsumerWidget {
   final String? companyName;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LicensesPage> createState() => _LicensesPageState();
+}
+
+class _LicensesPageState extends ConsumerState<LicensesPage> {
+  final Set<String> _selected = {};
+
+  @override
+  Widget build(BuildContext context) {
     final listAsync = ref.watch(licensesListProvider);
     final now = DateTime.now();
+    final hasSel = _selected.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
-          title: Text(companyName != null ? 'Licenze · $companyName' : 'Licenze')),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _open(context, ref, null),
-        icon: const Icon(Icons.add),
-        label: const Text('Nuova licenza'),
+        title: Text(hasSel
+            ? '${_selected.length} selezionate'
+            : (widget.companyName != null
+                ? 'Licenze · ${widget.companyName}'
+                : 'Licenze')),
+        leading: hasSel
+            ? IconButton(
+                icon: const Icon(Icons.close),
+                tooltip: 'Annulla selezione',
+                onPressed: () => setState(_selected.clear),
+              )
+            : null,
+        actions: [
+          if (hasSel)
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              tooltip: 'Elimina selezionate',
+              onPressed: () => _deleteSelected(context),
+            ),
+        ],
       ),
+      floatingActionButton: hasSel
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => _open(context, null),
+              icon: const Icon(Icons.add),
+              label: const Text('Nuova licenza'),
+            ),
       body: listAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Errore: $e')),
         data: (all) {
-          final licenses = companyId == null
+          final licenses = widget.companyId == null
               ? all
-              : all.where((l) => l.companyId == companyId).toList();
+              : all.where((l) => l.companyId == widget.companyId).toList();
           if (licenses.isEmpty) {
             return const Center(child: Text('Nessuna licenza.'));
           }
@@ -46,31 +77,47 @@ class LicensesPage extends ConsumerWidget {
             itemBuilder: (context, i) {
               final l = licenses[i];
               final overdue = l.overdueAt(now);
+              final sel = _selected.contains(l.id);
               return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: (overdue ? Colors.orange : Colors.green)
-                      .withValues(alpha: 0.15),
-                  child: Icon(Icons.workspace_premium_outlined,
-                      color: overdue ? Colors.orange : Colors.green),
+                leading: Checkbox(
+                  value: sel,
+                  onChanged: (v) => setState(() {
+                    if (v == true) {
+                      _selected.add(l.id);
+                    } else {
+                      _selected.remove(l.id);
+                    }
+                  }),
                 ),
                 title: Text('${l.companyName ?? l.companyId} · ${l.name}'),
                 subtitle: Text(
                     '${Fmt.euro(l.price)}/${l.period} · ${l.status}'
                     '${l.renewalDate != null ? ' · rinnovo ${Fmt.date(l.renewalDate)}' : ''}'
                     '${overdue ? '  ⚠ in ritardo' : ''}'),
-                trailing: PopupMenuButton<String>(
-                  onSelected: (v) {
-                    if (v == 'edit') _open(context, ref, l);
-                    if (v == 'pay') _addPayment(context, ref, l);
-                    if (v == 'del') _delete(context, ref, l);
-                  },
-                  itemBuilder: (_) => const [
-                    PopupMenuItem(value: 'pay', child: Text('Registra pagamento')),
-                    PopupMenuItem(value: 'edit', child: Text('Modifica')),
-                    PopupMenuItem(value: 'del', child: Text('Elimina')),
-                  ],
-                ),
-                onTap: () => _open(context, ref, l),
+                trailing: hasSel
+                    ? null
+                    : PopupMenuButton<String>(
+                        onSelected: (v) {
+                          if (v == 'edit') _open(context, l);
+                          if (v == 'pay') _addPayment(context, l);
+                          if (v == 'del') _delete(context, l);
+                        },
+                        itemBuilder: (_) => const [
+                          PopupMenuItem(
+                              value: 'pay', child: Text('Registra pagamento')),
+                          PopupMenuItem(value: 'edit', child: Text('Modifica')),
+                          PopupMenuItem(value: 'del', child: Text('Elimina')),
+                        ],
+                      ),
+                onTap: hasSel
+                    ? () => setState(() {
+                          if (sel) {
+                            _selected.remove(l.id);
+                          } else {
+                            _selected.add(l.id);
+                          }
+                        })
+                    : () => _open(context, l),
               );
             },
           );
@@ -79,18 +126,17 @@ class LicensesPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _open(BuildContext context, WidgetRef ref, License? l) async {
+  Future<void> _open(BuildContext context, License? l) async {
     final saved = await Navigator.of(context).push<bool>(MaterialPageRoute(
         builder: (_) =>
-            LicenseFormPage(license: l, presetCompanyId: companyId)));
+            LicenseFormPage(license: l, presetCompanyId: widget.companyId)));
     if (saved == true) {
       ref.invalidate(licensesListProvider);
       ref.invalidate(dashboardProvider);
     }
   }
 
-  Future<void> _addPayment(
-      BuildContext context, WidgetRef ref, License l) async {
+  Future<void> _addPayment(BuildContext context, License l) async {
     final ctrl = TextEditingController(text: Fmt.amount(l.price));
     final amount = await showDialog<double>(
       context: context,
@@ -120,8 +166,8 @@ class LicensesPage extends ConsumerWidget {
           .addPayment(l.id, l.companyId, amount, DateTime.now());
       ref.invalidate(dashboardProvider);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Pagamento di ${Fmt.euro(amount)} registrato.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Pagamento di ${Fmt.euro(amount)} registrato.')));
       }
     } catch (e) {
       if (context.mounted) {
@@ -131,7 +177,7 @@ class LicensesPage extends ConsumerWidget {
     }
   }
 
-  Future<void> _delete(BuildContext context, WidgetRef ref, License l) async {
+  Future<void> _delete(BuildContext context, License l) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -149,6 +195,33 @@ class LicensesPage extends ConsumerWidget {
     );
     if (ok != true) return;
     await ref.read(developerRepositoryProvider).delete(l.id);
+    ref.invalidate(licensesListProvider);
+    ref.invalidate(dashboardProvider);
+  }
+
+  Future<void> _deleteSelected(BuildContext context) async {
+    final n = _selected.length;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('Eliminare $n licenze?'),
+        content: const Text('Le licenze e i relativi pagamenti verranno eliminati.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Annulla')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Elimina')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final repo = ref.read(developerRepositoryProvider);
+    for (final id in _selected) {
+      await repo.delete(id);
+    }
+    setState(_selected.clear);
     ref.invalidate(licensesListProvider);
     ref.invalidate(dashboardProvider);
   }

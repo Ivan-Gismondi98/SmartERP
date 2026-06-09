@@ -62,7 +62,7 @@ class DeveloperRepository {
   Future<List<AppBundle>> listBundles() async {
     final rows = await _client
         .from('app_bundles')
-        .select('id, name, description, app_codes, price, period')
+        .select('id, name, description, app_codes, price, period, is_default')
         .order('name');
     return rows.map(AppBundle.fromJson).toList();
   }

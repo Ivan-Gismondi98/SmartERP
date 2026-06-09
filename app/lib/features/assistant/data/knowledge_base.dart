@@ -43,7 +43,9 @@ class HelpTopic {
 }
 
 const _files = <String>[
-  'general', 'invoices', 'customers', 'products', 'chat', 'studio'
+  'general', 'invoices', 'customers', 'products', 'chat', 'studio',
+  'crm', 'accounting', 'documents', 'production', 'purchases', 'maintenance',
+  'projects'
 ];
 
 /// Tutti i topic di aiuto (caricati una volta dagli assets).

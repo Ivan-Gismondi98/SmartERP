@@ -9,6 +9,7 @@ class AppBundle {
     this.appCodes = const [],
     this.price = 0,
     this.period = 'monthly',
+    this.isDefault = false,
   });
 
   final String id;
@@ -17,6 +18,9 @@ class AppBundle {
   final List<String> appCodes;
   final double price;
   final String period;
+
+  /// Pacchetto predefinito (creato dal sistema): non eliminabile.
+  final bool isDefault;
 
   factory AppBundle.fromJson(Map<String, dynamic> j) => AppBundle(
         id: j['id'] as String,
@@ -27,6 +31,7 @@ class AppBundle {
             .toList(),
         price: (j['price'] as num?)?.toDouble() ?? 0,
         period: (j['period'] as String?) ?? 'monthly',
+        isDefault: (j['is_default'] as bool?) ?? false,
       );
 
   Map<String, dynamic> toJson() => {

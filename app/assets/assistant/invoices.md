@@ -44,3 +44,20 @@ Apri la fattura emessa e tocca **Nota di credito**: crea una bozza collegata
 Nel form fattura attiva **Interessi di mora se scaduta** e imposta il tasso
 annuo. Per le fatture scadute, dettaglio e PDF mostrano gli interessi maturati
 sul ritardo.
+
+## Creare un preventivo o un ordine (Vendite)
+<!-- perm: sales.create; roles: admin,employee; keywords: vendite, preventivo, ordine cliente, offerta, validità -->
+L'app **Vendite** gestisce i documenti pre-fattura. Apri **Vendite** e tocca
+**＋ Nuovo documento**: scegli **Preventivo** o **Ordine**, il cliente, la
+validità e le righe con IVA. Sono documenti non fiscali (niente SdI).
+
+## Confermare e convertire un preventivo in fattura
+<!-- perm: sales.convert; roles: admin,employee; keywords: conferma preventivo, accetta, converti in fattura, vendite -->
+Dal dettaglio del preventivo: **Conferma** assegna il numero; **Accetta** o
+**Rifiuta** ne aggiorna lo stato; **Converti in fattura** crea una bozza nel
+modulo Fatture con le stesse righe.
+
+## Stampare un preventivo in PDF o Word (Vendite)
+<!-- perm: sales.view; keywords: stampa preventivo, pdf preventivo, word preventivo, esporta vendite -->
+Dal dettaglio del preventivo tocca **Stampa PDF** o **Word**: usano il modello
+grafico Studio scelto e il branding aziendale, come le fatture.

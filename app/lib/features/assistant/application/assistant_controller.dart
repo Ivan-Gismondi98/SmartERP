@@ -39,10 +39,21 @@ String _roleDb(UserRole r) => switch (r) {
 String appFromPath(String? path) {
   if (path == null) return 'general';
   if (path.startsWith('/invoices')) return 'invoices';
+  // Vendite condivide la licenza/guida delle Fatture (app 'invoices').
+  if (path.startsWith('/sales')) return 'invoices';
   if (path.startsWith('/customers')) return 'customers';
   if (path.startsWith('/products')) return 'products';
   if (path.startsWith('/chat')) return 'chat';
   if (path.startsWith('/studio')) return 'studio';
+  if (path.startsWith('/crm')) return 'crm';
+  if (path.startsWith('/accounting')) return 'accounting';
+  if (path.startsWith('/documents')) return 'documents';
+  if (path.startsWith('/production')) return 'production';
+  // Acquisti include i Fornitori (licenza 'purchases').
+  if (path.startsWith('/purchases')) return 'purchases';
+  if (path.startsWith('/suppliers')) return 'purchases';
+  if (path.startsWith('/maintenance')) return 'maintenance';
+  if (path.startsWith('/projects')) return 'projects';
   return 'general';
 }
 

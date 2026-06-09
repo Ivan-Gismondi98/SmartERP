@@ -31,6 +31,31 @@ const _roles = <(String, String)>[
   ('customer', 'Cliente'),
 ];
 
+// Etichette leggibili dei moduli (codice modulo -> nome mostrato).
+const _moduleLabels = <String, String>{
+  'invoices': 'Fatture',
+  'sales': 'Vendite',
+  'customers': 'Clienti',
+  'products': 'Magazzino / Prodotti',
+  'suppliers': 'Fornitori',
+  'crm': 'CRM',
+  'accounting': 'Contabilità',
+  'documents': 'Documenti',
+  'production': 'Produzione',
+  'purchases': 'Acquisti',
+  'maintenance': 'Manutenzione',
+  'projects': 'Progetti',
+  'chat': 'Chat',
+  'studio': 'Studio',
+  'errors': 'Bug del giorno',
+  'support': 'Segnalazioni / Supporto',
+  'developer': 'Sviluppatore',
+  'settings': 'Impostazioni',
+};
+
+String _moduleLabel(String code) =>
+    _moduleLabels[code] ?? (code.isEmpty ? code : code.toUpperCase());
+
 class PermissionsSettingsPage extends ConsumerWidget {
   const PermissionsSettingsPage({super.key, this.moduleFilter});
 
@@ -103,7 +128,7 @@ class _Matrix extends ConsumerWidget {
         for (final entry in byModule.entries) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 16, 4, 4),
-            child: Text(entry.key.toUpperCase(),
+            child: Text(_moduleLabel(entry.key),
                 style: Theme.of(context).textTheme.titleMedium),
           ),
           ..._kindSection(context, ref, 'Permessi generici',

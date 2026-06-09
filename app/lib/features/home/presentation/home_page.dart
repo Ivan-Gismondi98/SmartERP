@@ -133,6 +133,12 @@ class HomePage extends ConsumerWidget {
             ),
           if (perms.contains(Perm.devDashboard))
             IconButton(
+              tooltip: 'Licenze',
+              icon: const Icon(Icons.workspace_premium_outlined),
+              onPressed: () => context.push('/licenses'),
+            ),
+          if (perms.contains(Perm.devDashboard))
+            IconButton(
               tooltip: 'Dashboard Sviluppatore',
               icon: const Icon(Icons.developer_board_outlined),
               onPressed: () => context.push('/dev'),
@@ -223,7 +229,9 @@ class _DashboardBody extends ConsumerWidget {
                 _ModuleTile(
                   module: v.module,
                   expired: v.expired,
-                  onTap: () => _open(context, v.module),
+                  onTap: () => v.expired
+                      ? _expiredNotice(context, v.module)
+                      : _open(context, v.module),
                 ),
             ],
           ),
@@ -249,6 +257,19 @@ class _DashboardBody extends ConsumerWidget {
           SnackBar(content: Text('Modulo "${m.label}" in arrivo.')),
         );
     }
+  }
+
+  /// App con licenza scaduta: non si apre, si invita a rinnovare.
+  void _expiredNotice(BuildContext context, _Module m) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+              'La licenza di "${m.label}" è scaduta. Rinnovala per riattivare '
+              'l\'applicazione (contatta lo sviluppatore).'),
+        ),
+      );
   }
 }
 
