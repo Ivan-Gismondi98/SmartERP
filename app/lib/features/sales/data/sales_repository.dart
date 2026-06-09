@@ -13,7 +13,7 @@ const _docSelect =
     'id, company_id, customer_id, doc_kind, doc_number, status, issue_date, '
     'valid_until, subtotal, tax_amount, total, stamp_duty, rounding, '
     'payment_method, payment_terms, payment_terms_days, notes, '
-    'numbering_year, numbering_seq, converted_invoice_id, '
+    'numbering_year, numbering_seq, converted_invoice_id, template_id, '
     'customers ( id, company_id, name, is_company, vat_number, tax_code, '
     'address, zip, city, province, country, sdi_code, pec, email, phone )';
 

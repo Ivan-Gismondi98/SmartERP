@@ -3,6 +3,9 @@
 //  Azioni: modifica/elimina, conferma (numerazione), accetta/rifiuta,
 //  conversione in fattura (modulo Fatture), duplica.
 // ============================================================
+import 'dart:typed_data';
+
+import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,10 +15,14 @@ import '../../../core/permissions/permissions_providers.dart';
 import '../../invoices/data/invoices_repository.dart';
 import '../../invoices/domain/invoice.dart';
 import '../../invoices/presentation/invoice_form_page.dart';
+import '../../profile/application/profile_providers.dart';
+import '../../studio/data/templates_repository.dart';
 import '../application/sales_providers.dart';
+import '../data/sales_docx.dart';
 import '../data/sales_repository.dart';
 import '../domain/sales_document.dart';
 import 'sales_form_page.dart';
+import 'sales_pdf_page.dart';
 
 class SalesDetailPage extends ConsumerWidget {
   const SalesDetailPage({super.key, required this.documentId});
@@ -185,6 +192,17 @@ class _DetailBody extends ConsumerWidget {
                     icon: const Icon(Icons.receipt_long),
                     label: const Text('Converti in fattura'),
                   ),
+                FilledButton.tonalIcon(
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => SalesPdfPage(doc: doc))),
+                  icon: const Icon(Icons.picture_as_pdf),
+                  label: const Text('Stampa PDF'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _downloadWord(context, ref),
+                  icon: const Icon(Icons.description_outlined),
+                  label: const Text('Word'),
+                ),
                 if (canCreate)
                   OutlinedButton.icon(
                     onPressed: () => _duplicate(context, ref),
@@ -197,6 +215,33 @@ class _DetailBody extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _downloadWord(BuildContext context, WidgetRef ref) async {
+    try {
+      final profile = await ref.read(currentProfileProvider.future);
+      final company = profile?.company;
+      if (company == null) {
+        if (context.mounted) _snack(context, 'Dati azienda mancanti.');
+        return;
+      }
+      final template = doc.templateId == null
+          ? null
+          : await ref
+              .read(templatesRepositoryProvider)
+              .getById(doc.templateId!);
+      final bytes =
+          const SalesDocxGenerator().build(doc, company, template: template);
+      await FileSaver.instance.saveFile(
+        name: '${doc.kindLabel}_${doc.displayNumber.replaceAll('/', '-')}',
+        bytes: Uint8List.fromList(bytes),
+        ext: 'docx',
+        mimeType: MimeType.microsoftWord,
+      );
+      if (context.mounted) _snack(context, 'Word generato.');
+    } catch (e) {
+      if (context.mounted) _snack(context, 'Errore Word: $e');
+    }
   }
 
   Future<void> _edit(BuildContext context) async {

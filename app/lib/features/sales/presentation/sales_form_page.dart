@@ -12,6 +12,7 @@ import '../../invoices/domain/vat.dart';
 import '../../products/application/products_providers.dart';
 import '../../products/domain/product.dart';
 import '../../profile/application/profile_providers.dart';
+import '../../studio/application/templates_providers.dart';
 import '../data/sales_repository.dart';
 import '../domain/sales_document.dart';
 
@@ -195,6 +196,30 @@ class _SalesFormPageState extends ConsumerState<SalesFormPage> {
                 labelText: 'Condizioni di pagamento (es. bonifico 30 gg)'),
             onChanged: (v) => doc.paymentTerms = v,
           ),
+          const SizedBox(height: 12),
+          // --- Modello documento (Studio) per l'export PDF/Word ---
+          Builder(builder: (context) {
+            final templates =
+                ref.watch(templatesListProvider).valueOrNull ?? const [];
+            final usable = templates
+                .where((t) => t.docType == 'quote' || t.docType == 'both')
+                .toList();
+            return DropdownButtonFormField<String?>(
+              initialValue: doc.templateId,
+              isExpanded: true,
+              decoration:
+                  const InputDecoration(labelText: 'Modello documento (Studio)'),
+              items: [
+                const DropdownMenuItem<String?>(
+                    value: null, child: Text('Standard')),
+                for (final t in usable)
+                  DropdownMenuItem<String?>(
+                      value: t.id,
+                      child: Text(t.name + (t.isDefault ? ' (default)' : ''))),
+              ],
+              onChanged: (v) => setState(() => doc.templateId = v),
+            );
+          }),
           const Divider(height: 32),
 
           // --- Righe ---

@@ -140,6 +140,7 @@ class SalesDocument {
     this.numberingYear,
     this.numberingSeq,
     this.convertedInvoiceId,
+    this.templateId,
     List<SalesItem>? items,
   })  : issueDate = issueDate ?? DateTime.now(),
         items = items ?? [];
@@ -162,6 +163,7 @@ class SalesDocument {
   int? numberingYear;
   int? numberingSeq;
   String? convertedInvoiceId;
+  String? templateId;
   List<SalesItem> items;
 
   bool get isDraft => status == SalesStatus.draft;
@@ -236,6 +238,7 @@ class SalesDocument {
       numberingYear: (j['numbering_year'] as num?)?.toInt(),
       numberingSeq: (j['numbering_seq'] as num?)?.toInt(),
       convertedInvoiceId: j['converted_invoice_id'] as String?,
+      templateId: j['template_id'] as String?,
       items: items,
     );
   }
@@ -258,6 +261,7 @@ class SalesDocument {
         'payment_terms_days': paymentTermsDays,
         'notes': notes,
         'converted_invoice_id': convertedInvoiceId,
+        'template_id': templateId,
       };
 
   static String _d(DateTime d) =>
