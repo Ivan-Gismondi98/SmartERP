@@ -57,6 +57,8 @@ const _modules = <_Module>[
       route: '/products', requiredPermission: Perm.productsView, app: 'products'),
   _Module('Fornitori', Icons.local_shipping_outlined,
       route: '/suppliers', requiredPermission: Perm.suppliersView),
+  _Module('Acquisti', Icons.shopping_bag_outlined,
+      route: '/purchases', requiredPermission: Perm.purchasesView, app: 'purchases'),
   _Module('Documenti', Icons.folder_open_outlined,
       route: '/documents', requiredPermission: Perm.documentsView, app: 'documents'),
   _Module('Chat', Icons.chat_bubble_outline,

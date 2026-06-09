@@ -60,6 +60,12 @@ class Perm {
   static const productionExecute = 'production.execute';
   static const productionBom = 'production.bom';
 
+  static const purchasesView = 'purchases.view';
+  static const purchasesCreate = 'purchases.create';
+  static const purchasesEdit = 'purchases.edit';
+  static const purchasesDelete = 'purchases.delete';
+  static const purchasesIssue = 'purchases.issue';
+
   static const chatView = 'chat.view';
   static const chatSend = 'chat.send';
   static const chatManage = 'chat.manage';

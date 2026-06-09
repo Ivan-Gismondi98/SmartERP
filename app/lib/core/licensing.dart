@@ -12,7 +12,7 @@ import 'supabase_providers.dart';
 /// App soggette a licenza (codici = nomi modulo).
 const kAppModules = <String>{
   'invoices', 'customers', 'products', 'chat', 'studio', 'assistant', 'crm',
-  'accounting', 'documents', 'production'
+  'accounting', 'documents', 'production', 'purchases'
 };
 
 /// Etichette leggibili delle app (per i selettori/pacchetti).
@@ -27,6 +27,7 @@ const kAppLabels = <String, String>{
   'accounting': 'Contabilità',
   'documents': 'Documenti',
   'production': 'Produzione',
+  'purchases': 'Acquisti',
   'suite': 'Suite completa',
 };
 
