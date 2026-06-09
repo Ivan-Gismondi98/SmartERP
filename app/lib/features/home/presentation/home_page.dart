@@ -20,7 +20,10 @@ import '../../tickets/data/tickets_repository.dart';
 /// Modulo del gestionale mostrato come tile nella dashboard.
 class _Module {
   const _Module(this.label, this.icon,
-      {this.route, this.requiredPermission, this.app, this.staffOnly = true});
+      {this.route,
+      this.requiredPermission,
+      this.app,
+      this.adminOnly = false});
   final String label;
   final IconData icon;
 
@@ -34,10 +37,13 @@ class _Module {
   /// licenza attiva per quell'app (null = non soggetto a licenza).
   final String? app;
 
-  /// Visibile solo allo staff (admin/employee/super_admin).
-  final bool staffOnly;
+  /// Visibile solo ad amministratore/sviluppatore (non ai dipendenti).
+  final bool adminOnly;
 }
 
+// Applicazioni mostrate come tile nella dashboard. Le pagine di sistema
+// (Segnalazioni, Bug del giorno, Supporto, Utenti, Dashboard Sviluppatore)
+// NON sono qui: sono icone nella barra in alto.
 const _modules = <_Module>[
   _Module('CRM', Icons.handshake_outlined,
       route: '/crm', requiredPermission: Perm.crmView, app: 'crm'),
@@ -51,38 +57,31 @@ const _modules = <_Module>[
       route: '/customers', requiredPermission: Perm.customersView, app: 'customers'),
   _Module('Magazzino', Icons.inventory_2_outlined,
       route: '/products', requiredPermission: Perm.productsView, app: 'products'),
+  _Module('Prodotti', Icons.sell_outlined,
+      route: '/products', requiredPermission: Perm.productsView, app: 'products'),
   _Module('Produzione', Icons.precision_manufacturing_outlined,
       route: '/production', requiredPermission: Perm.productionView, app: 'production'),
+  _Module('Acquisti', Icons.shopping_bag_outlined,
+      route: '/purchases', requiredPermission: Perm.purchasesView, app: 'purchases'),
+  // Fornitori fa parte del ciclo Acquisti: visibile con la stessa licenza.
+  _Module('Fornitori', Icons.local_shipping_outlined,
+      route: '/suppliers', requiredPermission: Perm.suppliersView, app: 'purchases'),
+  _Module('Documenti', Icons.folder_open_outlined,
+      route: '/documents', requiredPermission: Perm.documentsView, app: 'documents'),
   _Module('Manutenzione', Icons.build_outlined,
       route: '/maintenance', requiredPermission: Perm.maintenanceView, app: 'maintenance'),
   _Module('Progetti', Icons.assignment_outlined,
       route: '/projects', requiredPermission: Perm.projectsView, app: 'projects'),
-  _Module('Prodotti', Icons.sell_outlined,
-      route: '/products', requiredPermission: Perm.productsView, app: 'products'),
-  _Module('Fornitori', Icons.local_shipping_outlined,
-      route: '/suppliers', requiredPermission: Perm.suppliersView),
-  _Module('Acquisti', Icons.shopping_bag_outlined,
-      route: '/purchases', requiredPermission: Perm.purchasesView, app: 'purchases'),
-  _Module('Documenti', Icons.folder_open_outlined,
-      route: '/documents', requiredPermission: Perm.documentsView, app: 'documents'),
   _Module('Chat', Icons.chat_bubble_outline,
       route: '/chat', requiredPermission: Perm.chatView, app: 'chat'),
   _Module('Studio', Icons.dashboard_customize_outlined,
       route: '/studio', requiredPermission: Perm.studioView, app: 'studio'),
-  _Module('Bug del giorno', Icons.bug_report_outlined,
-      route: '/errors', requiredPermission: Perm.errorsView),
-  _Module('Segnalazioni', Icons.confirmation_number_outlined,
-      route: '/tickets', requiredPermission: Perm.ticketsView),
-  _Module('Dashboard Sviluppatore', Icons.developer_board_outlined,
-      route: '/dev', requiredPermission: Perm.devDashboard),
-  _Module('Utenti', Icons.manage_accounts_outlined,
-      route: '/users', requiredPermission: Perm.orgUsersManage),
   _Module('Organizzazioni', Icons.apartment_outlined,
       route: '/orgs', requiredPermission: Perm.companiesManage),
-  _Module('Supporto', Icons.support_agent_outlined,
-      route: '/support', staffOnly: false),
+  // Impostazioni: solo admin/sviluppatore (anche senza licenze l'admin può
+  // gestire il branding aziendale). I dipendenti non la vedono.
   _Module('Impostazioni', Icons.settings_outlined,
-      route: '/settings', staffOnly: false),
+      route: '/settings', adminOnly: true),
 ];
 
 class HomePage extends ConsumerWidget {
@@ -114,6 +113,29 @@ class HomePage extends ConsumerWidget {
                 child: const Icon(Icons.notifications_outlined),
               ),
               onPressed: () => context.push('/tickets'),
+            ),
+          if (perms.contains(Perm.errorsView))
+            IconButton(
+              tooltip: 'Bug del giorno',
+              icon: const Icon(Icons.error_outline),
+              onPressed: () => context.push('/errors'),
+            ),
+          IconButton(
+            tooltip: 'Supporto',
+            icon: const Icon(Icons.support_agent_outlined),
+            onPressed: () => context.push('/support'),
+          ),
+          if (perms.contains(Perm.orgUsersManage))
+            IconButton(
+              tooltip: 'Utenti',
+              icon: const Icon(Icons.manage_accounts_outlined),
+              onPressed: () => context.push('/users'),
+            ),
+          if (perms.contains(Perm.devDashboard))
+            IconButton(
+              tooltip: 'Dashboard Sviluppatore',
+              icon: const Icon(Icons.developer_board_outlined),
+              onPressed: () => context.push('/dev'),
             ),
           if (isDeveloper)
             IconButton(
@@ -148,42 +170,64 @@ class _DashboardBody extends ConsumerWidget {
     final theme = Theme.of(context);
     final role = profile?.role ?? UserRole.customer;
     final perms = ref.watch(allowedPermissionsProvider).valueOrNull ?? const {};
-    final licensedApps =
-        ref.watch(licensedAppsProvider).valueOrNull ?? const <String>{};
+    final appStates = ref.watch(appLicenseStatesProvider).valueOrNull ??
+        const <String, AppLicenseState>{};
+    // Le app scadute sono visibili solo ad admin/sviluppatore.
+    final isAdminLike =
+        role == UserRole.admin || role == UserRole.superAdmin;
 
-    final visibleModules = _modules.where((m) {
-      if (m.staffOnly && !role.isStaff) return false;
+    final visible = <({_Module module, bool expired})>[];
+    for (final m in _modules) {
+      // La dashboard delle app è riservata allo staff.
+      if (!role.isStaff) continue;
+      if (m.adminOnly && !isAdminLike) continue;
       if (m.requiredPermission != null &&
           !perms.contains(m.requiredPermission)) {
-        return false;
+        continue;
       }
-      // App soggetta a licenza: visibile solo se l'organizzazione è abilitata.
-      if (m.app != null && !licensedApps.contains(m.app)) return false;
-      return true;
-    }).toList();
+      if (m.app != null) {
+        final state = appStates[m.app];
+        if (state == null) continue; // nessuna licenza: non mostrata
+        if (state == AppLicenseState.expired) {
+          if (!isAdminLike) continue; // scaduta: nascosta agli utenti semplici
+          visible.add((module: m, expired: true));
+        } else {
+          visible.add((module: m, expired: false));
+        }
+      } else {
+        visible.add((module: m, expired: false));
+      }
+    }
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         _ProfileCard(profile: profile),
         const SizedBox(height: 24),
-        Text('Moduli', style: theme.textTheme.titleMedium),
-        const SizedBox(height: 12),
-        GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: _columnsFor(context),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.3,
-          children: [
-            for (final m in visibleModules)
-              _ModuleTile(
-                module: m,
-                onTap: () => _open(context, m),
-              ),
-          ],
-        ),
+        if (visible.isEmpty)
+          // Nessuna app disponibile (es. dipendente di un'organizzazione
+          // senza licenze attive): messaggio informativo, niente griglia.
+          _NoAppsBody(isAdminLike: isAdminLike)
+        else ...[
+          Text('Applicazioni', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 12),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: _columnsFor(context),
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.3,
+            children: [
+              for (final v in visible)
+                _ModuleTile(
+                  module: v.module,
+                  expired: v.expired,
+                  onTap: () => _open(context, v.module),
+                ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -258,10 +302,14 @@ class _ProfileCard extends StatelessWidget {
 }
 
 class _ModuleTile extends StatelessWidget {
-  const _ModuleTile({required this.module, required this.onTap});
+  const _ModuleTile(
+      {required this.module, required this.onTap, this.expired = false});
 
   final _Module module;
   final VoidCallback onTap;
+
+  /// Licenza scaduta: la tile è mostrata (solo all'admin) con barra rossa.
+  final bool expired;
 
   @override
   Widget build(BuildContext context) {
@@ -270,14 +318,78 @@ class _ModuleTile extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
           children: [
-            Icon(module.icon, size: 36, color: theme.colorScheme.primary),
-            const SizedBox(height: 8),
-            Text(module.label, style: theme.textTheme.titleSmall),
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(module.icon,
+                      size: 36,
+                      color: expired
+                          ? theme.colorScheme.outline
+                          : theme.colorScheme.primary),
+                  const SizedBox(height: 8),
+                  Text(module.label, style: theme.textTheme.titleSmall),
+                ],
+              ),
+            ),
+            if (expired)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  color: theme.colorScheme.error,
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Text(
+                    'SCADUTO',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onError,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Messaggio mostrato quando non c'è alcuna applicazione disponibile
+/// (tipicamente un dipendente di un'organizzazione senza licenze attive).
+class _NoAppsBody extends StatelessWidget {
+  const _NoAppsBody({required this.isAdminLike});
+  final bool isAdminLike;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 64, horizontal: 24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.apps_outlined,
+              size: 56, color: theme.colorScheme.outline),
+          const SizedBox(height: 16),
+          Text('Nessuna applicazione disponibile',
+              style: theme.textTheme.titleMedium, textAlign: TextAlign.center),
+          const SizedBox(height: 8),
+          Text(
+            isAdminLike
+                ? 'La tua organizzazione non ha licenze attive. Attiva le '
+                    'applicazioni dalla gestione licenze (sviluppatore).'
+                : 'La tua organizzazione non ha applicazioni attive.\n'
+                    'Contatta l\'amministratore della tua organizzazione per '
+                    'sapere quali applicazioni sono abilitate.',
+            style: theme.textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
